@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="de">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eine Website für Alle und Keinen</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    <link href="style.css" rel="stylesheet">
+  </head>
+
+  <body>
+    <img src="https://imgur.com/MTR1Zvg.jpg" alt="Mein Foto">
+
+    <h1 class="center">Hallo...</h1>
+
+    <h2 class="left">Über mich:</h2>
+
+    <p>Ich mag es nicht, mich auf eine gewöhnliche Ebene zu begeben; daher wähle ich eine allzumenschliche Weise der Vorstellung: Zwei Dinge erfüllen mein Gemüt mit immer neuer und zunehmender Bewunderung und Ehrfurcht, je öfter und anhaltender sich das Nachdenken damit beschäftigt: die Suche nach einer mathematischen Lösung und die Programmierung eines IT-Projekts. Ich bin jemand, der sich freiwillig aus der Realität in die Welt der Mythologie und des Codings vertreiben lässt. Meine letzte Zuflucht finde ich in der Kunst, meine Therapie ist die Philosophie.</p>
+
+    <p>Meine Lebensphilosophie lässt sich durch <strong>= e<sup>x</sup></strong> beschreiben. Kant und Nietzsche wirken in meinem Bewusstsein und Unterbewusstsein wie Yin und Yang und gestalten mein liebstes Ich. Ganz im Sinne Nietzsches gilt für mich: Selbst wenn ich mit Ungeheuern kämpfe, achte ich darauf, dabei nicht selbst zum Ungeheuer zu werden.</p>
+
+    <h2 class="left">Ein paar meiner Facetten:</h2>
+
+    <ul>
+      <li>
+        <strong>Lieblingsgemälde:</strong> Die Alexanderschlacht bei Issos von Albrecht Altdorfer.
+      </li>
+
+      <li>
+        <strong>Lebenseinstellung:</strong> Ewiges Mitglied der "Cat-Party" und ein Architekt der Moderne auf den Spuren der Antike.
+      </li>
+
+      <li>
+        <strong>Coding & Mathe:</strong> Ich habe das klassische <code>print("Hello World")</code> längst hinter mir gelassen, vergesse niemals das <strong>+ C</strong> bei meinen Integralen.
+      </li>
+
+      <li>
+        Ich kann <strong>meinen Lebenslauf</strong> folgendermaßen zum Ausdruck bringen:
+        <h3>f(t) = sin³(t) + 0.3 sin(3t) e<sup>-0.1t</sup> </h3>
+      </li>
+
+      <li>
+        Ich glaube fest an <strong>die Symmetrie und Gerechtigkeit</strong> des Lebens:
+        <h3>C(n, k) = C(n, n–k)</h3>
+        </li>
+
+      <li>
+        Meine <strong>Botschaft:</strong>
+        <h3>x = 16 sin³(t)  ;  y = 13 cos(t) – 5 cos(2t) – 2 cos(3t) – cos(4t)</h3>
+        </li>
+
+      <li>
+        Mein <strong>Lebensmotto / Lieblingszitat:</strong>
+        <h4>„Aufklärung ist der Ausgang des Menschen aus seiner selbstverschuldeten Unmündigkeit.“ — Immanuel Kant</h4>
+      </li>
+
+      <li>
+        Ich bediene mich der Programmierung, um meine kritischen Gedanken in einer Mischung aus <strong>Technik und Philosophie</strong> zu vermitteln.
+
+        <p class="center"> <strong> Hierdurch ein Python-Script als Beispiel:</strong></p>
+
+        <div class="button-group">
+          <button id="copyBtn" class="py-btn" onclick="copyCode()">Code kopieren</button>
+          <a href="heartm.py" download="heartm.py" class="py-btn">Herunterladen</a>
+          <a href="pycharm://open?file=C:\DeinOrdner\heartm.py" class="py-btn">In PyCharm öffnen</a>
+        </div>
+      </li>
+    </ul>
+
+    <script>
+      function copyCode() {
+        // Zeilenumbruch direkt nach dem Backtick eingefügt, damit die Einrückung beim Kopieren stimmt
+        const pythonCode = `
+# Improving of Heart For ALL and NONE. OK, Habibies... ❤️
+import turtle
+import math
+import random
+import time
+
+# Screen setup
+screen = turtle.Screen()
+screen.title("A Heart for ALL and NONE")
+screen.bgcolor("black")
+screen.setup(width=800, height=800)
+screen.tracer(0)
+
+# Turtle setup
+t = turtle.Turtle()
+t.hideturtle()
+t.speed(3)
+t.pensize(3)
+
+def heart_x(t_val):
+    return 15 * math.sin(t_val) ** 3
+
+def heart_y(t_val):
+    return (15 * math.cos(t_val)
+            - 5 * math.cos(2 * t_val)
+            - 2 * math.cos(3 * t_val)
+            - math.cos(4 * t_val))
+
+# Generate heart points
+points = []
+scale = 15
+for i in range(100):
+    t_val = i * 700 * math.pi / 5000
+    x = heart_x(t_val) * scale
+    y = heart_y(t_val) * scale
+    points.append((x, y))
+
+colors = ["red", "deeppink", "hotpink", "pink", "white"]
+
+# Draw random lines to heart
+for _ in range(3000):
+    x, y = random.choice(points)
+    start_y = random.randint(-10, 10)
+    t.penup()
+    t.goto(0, start_y)
+    t.pendown()
+    t.color(random.choice(colors))
+    t.goto(x, y)
+    screen.update()
+
+# Draw heart outline
+t.color("black")
+t.penup()
+first = True
+for x, y in points:
+    if first:
+        t.goto(x, y)
+        t.pendown()
+        first = False
+    else:
+        t.goto(x, y)
+
+screen.update()
+time.sleep(1)
+t.clear()
+
+writer = turtle.Turtle()
+writer.hideturtle()
+writer.penup()
+writer.color("lime")
+
+def type_message(text):
+    writer.clear()
+    writer.goto(0, 0)
+    current = ""
+    for letter in text:
+        current += letter
+        writer.clear()
+        writer.write(current, align="center", font=("Arial", 20, "bold"))
+        screen.update()
+        time.sleep(0.05)
+
+messages = [
+    "The first message is for you..",
+    "I ❤️ You.",
+    "And...",
+    "There will always be rocks in the road ahead of us...",
+    "They can be stumbling blocks or stepping stones...",
+    "It all depends on how you use them.",
+    "Now, for the haters and frenemies...",
+    "Anyone, who has declared someone else to be an idiot...",
+    "a bad apple...",
+    "is annoyed when it turns out in the end...",
+    "that he isn't.",
+    "Your plans have fallen like the fallen Angel (Luke 10:18).",
+    "So...",
+    "Wer mit Ungeheuern kämpft, mag zusehen...",
+    "dass er nicht dabei zum Ungeheuer wird.",
+    "und wenn du lange in einen Abgrund blickst...",
+    "blickt der Abgrund auch in dich hinein.",
+    "However, i consider a sedentary life as...",
+    "a sin against the the Holy Spirit.",
+    "Ich habe euch gegen mich geholfen, aber ...",
+    "es hat auch nicht funkioniert...😅😂",
+    "Furthermore, in individuals, insanity is rare; but...",
+    "in groups, parties, nations and epochs...",
+    "it is the rule.",
+    "And this is my Consolation to you, Guys...🫰🏻",
+    "And remember, Habibies...",
+    "There are no beautiful surfaces...",
+    "without a terrible depth —Nietzsche",
+    "Everything was written beyond Good and Evil...",
+    "and with...",
+    "PURE LOVE UND REINEN VERNUNFT ...😘"
+]
+
+for msg in messages:
+    type_message(msg)
+    time.sleep(2)
+
+turtle.done()`;
+
+        navigator.clipboard.writeText(pythonCode.trim()).then(() => {
+          const btn = document.getElementById('copyBtn');
+          btn.innerText = 'Kopiert!';
+          btn.classList.add('success');
+
+          setTimeout(() => {
+            btn.innerText = 'Code kopieren';
+            btn.classList.remove('success');
+          }, 2000);
+        }).catch(err => {
+          alert('Kopieren fehlgeschlagen: ', err);
+        });
+      }
+    </script>
+  </body>
+</html>
