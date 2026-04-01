@@ -250,7 +250,6 @@ for msg in messages:
 
 turtle.done()`;
 
-        
         navigator.clipboard.writeText(pythonCode.trim()).then(() => {
           const btn = document.getElementById('copyBtn');
           btn.innerText = 'Kopiert!';
@@ -263,8 +262,6 @@ turtle.done()`;
         }).catch(err => {
           alert('Kopieren fehlgeschlagen: ', err);
         });
-
-
       }
     </script>
   </body>
