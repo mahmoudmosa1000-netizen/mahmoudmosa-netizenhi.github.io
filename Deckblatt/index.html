@@ -1,1 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status: Working on ⏳</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f7fb;
+            color: #333;
+        }
+        .status-container {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            background-color: #10b981; /* Schönes Grün */
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
+</head>
+<body>
 
+    <div class="status-container">
+        <span class="text">Working on</span>
+        <div class="dot"></div>
+    </div>
+
+</body>
+</html>
