@@ -1,53 +1,239 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Status: Working on ⏳</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f5f7fb;
-            color: #333;
-        }
-        .status-container {
-            display: flex;
-            align-items: center;
-            background: white;
-            padding: 15px 25px;
-            border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .text {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-right: 10px;
-        }
-        .dot {
-            width: 12px;
-            height: 12px;
-            background-color: #10b981; /* Schönes Grün */
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deckblatt Designer</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Third-party (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Translations – must load BEFORE main.js -->
+  <script src="lang.js"></script>
 </head>
 <body>
 
-    <div class="status-container">
-        <span class="text">Working on</span>
-        <div class="dot"></div>
+<!-- ═══════════════════════════════════════
+     TOP BAR
+═══════════════════════════════════════ -->
+<div class="topbar">
+
+  <div class="topbar-left">
+    <div class="tlogo">
+      <span data-i18n="toolTitle">DECKBLATT</span>
+      <span data-i18n="toolTitleSpan"> DESIGNER</span>
     </div>
+    <div class="tsub" data-i18n="toolSub">Professionelles Bewerbungsdeckblatt</div>
+  </div>
+
+  <div class="topbar-right">
+    <!-- Language switcher -->
+    <div class="lang-switcher" role="group" aria-label="Language">
+      <button class="lang-btn active" data-lang="de" onclick="applyLang('de')">🇩🇪DE</button>
+      <button class="lang-btn"        data-lang="en" onclick="applyLang('en')">🇬🇧EN</button>
+      <button class="lang-btn"        data-lang="ar" onclick="applyLang('ar')">🇸🇾عر</button>
+    </div>
+
+    <button class="btn-pdf" onclick="downloadPDF()" data-i18n="btnPdf">
+      ⬇ Als PDF speichern
+    </button>
+  </div>
+
+</div><!-- /topbar -->
+
+
+<!-- ═══════════════════════════════════════
+     MAIN
+═══════════════════════════════════════ -->
+<div class="main">
+
+  <!-- ════════════════════════════════════
+       EDITOR  (left panel)
+  ════════════════════════════════════ -->
+  <aside class="editor">
+
+    <!-- Design template -->
+    <div class="st" data-i18n="secTemplate">Design-Vorlage</div>
+    <div class="themes">
+      <button class="tbtn active" data-t="classic"
+        style="background:#dde9e5;color:#3d5c52;"
+        onclick="setTheme('classic',this)"
+        data-i18n="tClassic">Classic</button>
+
+      <button class="tbtn" data-t="band"
+        style="background:#5a7a6e;color:#fff;"
+        onclick="setTheme('band',this)"
+        data-i18n="tBand">Header-Band</button>
+
+      <button class="tbtn" data-t="sidebar"
+        style="background:#3d5c52;color:#fff;"
+        onclick="setTheme('sidebar',this)"
+        data-i18n="tSidebar">Sidebar</button>
+
+      <button class="tbtn" data-t="minimal"
+        style="background:#f0f5f3;color:#3d5c52;border:1.5px solid #dde9e5;"
+        onclick="setTheme('minimal',this)"
+        data-i18n="tMinimal">Minimal</button>
+    </div>
+
+    <!-- Personal data -->
+    <div class="st" data-i18n="secPersonal">Persönliche Daten</div>
+
+    <div class="fg">
+      <label data-i18n="lName">Vollständiger Name</label>
+      <input type="text" id="f-name" data-ph="pName"
+             placeholder="Vor- und Nachname" oninput="renderCover()">
+    </div>
+    <div class="fg">
+      <label data-i18n="lStreet">Straße &amp; Hausnummer</label>
+      <input type="text" id="f-street" data-ph="pStreet"
+             placeholder="Musterstraße 12" oninput="renderCover()">
+    </div>
+    <div class="fg">
+      <label data-i18n="lCity">PLZ &amp; Ort</label>
+      <input type="text" id="f-city" data-ph="pCity"
+             placeholder="12345 Musterstadt" oninput="renderCover()">
+    </div>
+    <div class="fg">
+      <label data-i18n="lPhone">Telefon</label>
+      <input type="text" id="f-phone" data-ph="pPhone"
+             placeholder="0157 ..." oninput="renderCover()">
+    </div>
+    <div class="fg">
+      <label data-i18n="lEmail">E-Mail</label>
+      <input type="text" id="f-email" data-ph="pEmail"
+             placeholder="name@email.de" oninput="renderCover()">
+    </div>
+
+    <!-- Application -->
+    <div class="st" data-i18n="secJob">Bewerbung</div>
+
+    <div class="fg">
+      <label data-i18n="lJob">Ich bewerbe mich als</label>
+      <input type="text" id="f-job" data-ph="pJob"
+             placeholder="z.B. Fachinformatiker" oninput="renderCover()">
+    </div>
+    <div class="fg">
+      <label data-i18n="lCompany">Bei Unternehmen (optional)</label>
+      <input type="text" id="f-company" data-ph="pCompany"
+             placeholder="z.B. Siemens AG" oninput="renderCover()">
+    </div>
+
+    <!-- Photo upload -->
+    <div class="st" data-i18n="secPhoto">Bewerbungsfoto</div>
+
+    <label class="upload-lbl" for="photo-input" id="photo-drop"
+           ondragover="event.preventDefault();this.style.borderColor='var(--sage)'"
+           ondragleave="this.style.borderColor=''"
+           ondrop="handleDrop(event)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <span data-i18n="btnUpload">📷 Foto hochladen (JPG, PNG, WEBP)</span>
+    </label>
+    <input type="file" id="photo-input" accept="image/*" onchange="loadPhoto(event)">
+
+    <!-- Thumbnail after upload -->
+    <div class="thumb-row" id="thumb-row">
+      <img id="thumb" src="" alt="Vorschau">
+      <div>
+        <div class="thumb-name" id="thumb-name">—</div>
+        <button class="del-btn" onclick="removePhoto()" data-i18n="btnRemove">
+          🗑 Entfernen
+        </button>
+      </div>
+    </div>
+
+    <!-- Photo settings -->
+    <div class="st" data-i18n="secPhotoOpts">Foto-Einstellungen</div>
+
+    <div class="fg">
+      <label data-i18n="lPos">Foto-Position</label>
+      <select id="f-pos" onchange="renderCover()">
+        <option value="corner" data-i18n="posCorner">Ecke oben rechts</option>
+        <option value="center" data-i18n="posCenter">Mittig zentriert</option>
+        <option value="none"   data-i18n="posNone">Kein Foto anzeigen</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label data-i18n="lShape">Foto-Form</label>
+      <select id="f-shape" onchange="renderCover()">
+        <option value="0"   data-i18n="shRect">Rechteckig</option>
+        <option value="8px" data-i18n="shRound">Abgerundet</option>
+        <option value="50%" data-i18n="shCircle">Rund (Kreis)</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>
+        <span data-i18n="lSize">Foto-Größe</span>:
+        <span id="lbl-sz">120px</span>
+      </label>
+      <input type="range" id="f-sz" min="80" max="200" value="120" step="5"
+        oninput="document.getElementById('lbl-sz').textContent=this.value+'px';renderCover()">
+    </div>
+
+    <!-- Frame style -->
+    <div class="st" data-i18n="secFrame">Rahmen-Stil</div>
+    <div class="chips">
+      <div class="chip on"  data-f="none"   onclick="setFrame('none',this)"   data-i18n="frNone">Kein</div>
+      <div class="chip"     data-f="tw"     onclick="setFrame('tw',this)"     data-i18n="frThinW">Dünn Weiß</div>
+      <div class="chip"     data-f="TW"     onclick="setFrame('TW',this)"     data-i18n="frThickW">Dick Weiß</div>
+      <div class="chip"     data-f="sage"   onclick="setFrame('sage',this)"   data-i18n="frSage">Salbei</div>
+      <div class="chip"     data-f="dark"   onclick="setFrame('dark',this)"   data-i18n="frDark">Dunkel</div>
+      <div class="chip"     data-f="shadow" onclick="setFrame('shadow',this)" data-i18n="frShadow">Schatten</div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="st" data-i18n="secQr">QR-Code</div>
+
+    <label class="qr-row">
+      <input type="checkbox" id="qr-on" onchange="renderCover()">
+      <span data-i18n="lQrShow">QR-Code anzeigen</span>
+    </label>
+
+    <div class="fg">
+      <label data-i18n="lQrUrl">URL / LinkedIn / Portfolio</label>
+      <input type="text" id="f-qr" data-ph="pQr"
+             placeholder="https://linkedin.com/in/..." oninput="renderCover()">
+    </div>
+
+    <!-- Note -->
+    <div style="height:1px;background:rgba(90,122,110,.15);margin:14px 0 10px;"></div>
+    <p class="note-txt" data-i18n="lNote">
+      Alle Daten bleiben lokal. Kein Server, kein Upload.
+    </p>
+
+  </aside><!-- /editor -->
+
+
+  <!-- ════════════════════════════════════
+       PREVIEW  (right panel)
+  ════════════════════════════════════ -->
+  <div class="preview-area">
+    <div id="cover-page" class="t-classic">
+      <!-- Rendered by main.js → renderCover() -->
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+
+<!-- App scripts (lang.js loaded in <head>) -->
+<script src="main.js"></script>
 
 </body>
 </html>
