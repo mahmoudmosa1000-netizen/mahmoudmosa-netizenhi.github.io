@@ -1,1 +1,302 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Language switcher */
+    .lang-switcher {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      margin-right: 10px;
+    }
+    .lang-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.7);
+      border-radius: 5px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+      font-family: 'Source Sans 3', sans-serif;
+    }
+    .lang-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+    .lang-btn.active { background: var(--g-light); color: var(--g-dark); border-color: var(--g-light); }
+
+    /* RTL tweaks */
+    [dir="rtl"] .editor { border-right: none; border-left: 1px solid var(--g-pale); }
+    [dir="rtl"] .etab   { letter-spacing: 0; }
+    [dir="rtl"] .section-divider { letter-spacing: 0; }
+    [dir="rtl"] .topbar-logo { font-family: 'Source Sans 3', sans-serif; }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="topbar">
+  <div class="topbar-logo" data-i18n="appTitle">CV <span>Builder</span></div>
+  <div class="topbar-actions">
+
+    <!-- Language Switcher -->
+    <div class="lang-switcher">
+      <button class="lang-btn active" data-lang="de" onclick="setLang('de')">🇩🇪 DE</button>
+      <button class="lang-btn"        data-lang="en" onclick="setLang('en')">🇬🇧 EN</button>
+      <button class="lang-btn"        data-lang="ar" onclick="setLang('ar')">🇸🇦 عر</button>
+    </div>
+
+    <button class="btn btn-ghost"   onclick="resetAll()"     data-i18n="btnReset">Zurücksetzen</button>
+    <button class="btn btn-ghost"   onclick="saveData()"     data-i18n="btnSave">💾 Speichern</button>
+    <button class="btn btn-ghost"   onclick="downloadPDF()"  data-i18n="btnDownloadPDF">⬇ PDF herunterladen</button>
+    <button class="btn btn-primary" onclick="exportPDF()"    data-i18n="btnPrint">🖨 Drucken</button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="app">
+
+  <!-- ════ EDITOR ════ -->
+  <div class="editor">
+    <div class="editor-tabs">
+      <button class="etab active" onclick="switchTab('personal',this)"   data-i18n="tabPerson">Person</button>
+      <button class="etab"        onclick="switchTab('experience',this)" data-i18n="tabExperience">Erfahrung</button>
+      <button class="etab"        onclick="switchTab('education',this)"  data-i18n="tabEducation">Bildung</button>
+      <button class="etab"        onclick="switchTab('skills',this)"     data-i18n="tabSkills">Skills</button>
+      <button class="etab"        onclick="switchTab('design',this)"     data-i18n="tabDesign">Design</button>
+      <button class="etab"        onclick="switchTab('page2',this)"      data-i18n="tabPage2">+ Seite 2</button>
+    </div>
+
+    <!-- ── PERSON ── -->
+    <div id="panel-personal" class="epanel active">
+
+      <div class="section-divider" data-i18n="sectionPhoto">Profilfoto</div>
+      <div id="photo-section">
+        <div class="photo-upload-area" id="photo-drop-zone"
+             onclick="document.getElementById('photo-input').click()"
+             ondragover="event.preventDefault();this.style.borderColor='var(--g-muted)'"
+             ondragleave="this.style.borderColor=''"
+             ondrop="handleDrop(event)">
+          <div style="font-size:28px;margin-bottom:6px;">📷</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-mid);margin-bottom:3px;" data-i18n="photoUploadTitle">Foto hochladen</div>
+          <div style="font-size:11px;color:var(--ink-faint);" data-i18n="photoUploadSub">Klicken oder Bild hierher ziehen</div>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" onchange="handlePhotoUpload(event)">
+      </div>
+
+      <div id="photo-preview-section" style="display:none;">
+        <div class="photo-preview-wrap">
+          <img id="photo-preview-img" class="photo-preview-img" src="" alt="">
+          <div class="photo-preview-info">
+            <div class="photo-preview-name" id="photo-preview-name">Dein Foto</div>
+            <div class="photo-preview-sub" data-i18n="photoShown">Wird im Lebenslauf angezeigt</div>
+            <div class="photo-btns">
+              <button class="photo-btn" onclick="document.getElementById('photo-input').click()" data-i18n="photoChange">🔄 Ändern</button>
+              <button class="photo-btn danger" onclick="removePhoto()" data-i18n="photoRemove">🗑 Entfernen</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <label data-i18n="labelPhotoShape">Foto-Form</label>
+          <select id="f-photo-shape" onchange="render()">
+            <option value="circle" data-i18n="optCircle">Rund (Kreis)</option>
+            <option value="square" data-i18n="optSquare">Quadratisch (abgerundet)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-divider" style="margin-top:1.25rem;" data-i18n="sectionPersonal">Persönliche Daten</div>
+      <div class="form-group">
+        <label data-i18n="labelName">Vollständiger Name</label>
+        <input type="text" id="f-name" data-i18n="placeholderName" data-i18n-attr="placeholder" placeholder="z.B. Max Mustermann" oninput="render()">
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelRole">Berufsbezeichnung</label>
+        <input type="text" id="f-role" data-i18n="placeholderRole" data-i18n-attr="placeholder" placeholder="z.B. Angehender Fachinformatiker" oninput="render()">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="labelEmail">E-Mail</label>
+          <input type="email" id="f-email" data-i18n="placeholderEmail" data-i18n-attr="placeholder" placeholder="name@email.de" oninput="render()">
+        </div>
+        <div class="form-group">
+          <label data-i18n="labelPhone">Telefon</label>
+          <input type="tel" id="f-phone" data-i18n="placeholderPhone" data-i18n-attr="placeholder" placeholder="0157 ..." oninput="render()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="labelAddress">Adresse / Ort</label>
+          <input type="text" id="f-address" data-i18n="placeholderAddress" data-i18n-attr="placeholder" placeholder="Stadt, Land" oninput="render()">
+        </div>
+        <div class="form-group">
+          <label data-i18n="labelBirth">Geburtsdatum</label>
+          <input type="text" id="f-birth" data-i18n="placeholderBirth" data-i18n-attr="placeholder" placeholder="TT.MM.JJJJ" oninput="render()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelWeb">Website-URL</label>
+        <input type="text" id="f-web" data-i18n="placeholderWeb" data-i18n-attr="placeholder" placeholder="https://meine-webseite.de" oninput="render()">
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelWebLabel">Link-Text</label>
+        <input type="text" id="f-web-label" data-i18n="placeholderWebLabel" data-i18n-attr="placeholder" placeholder="Website" oninput="render()">
+      </div>
+
+      <div class="section-divider" data-i18n="sectionProfile">Profil &amp; Zusammenfassung</div>
+      <div class="form-group">
+        <label data-i18n="labelSummary">Kurzprofil</label>
+        <textarea id="f-summary" rows="5" data-i18n="placeholderSummary" data-i18n-attr="placeholder" placeholder="Beschreibe dich in 3–5 Sätzen..." oninput="render()"></textarea>
+      </div>
+      <div class="form-group" style="background:#f0f4ef;border-radius:6px;padding:8px 10px;">
+        <span style="font-size:11px;color:#5a7358;" data-i18n="websiteTip">💡 Tipp: Schreibe <strong>%%WEBSITE%%</strong> im Text.</span>
+      </div>
+
+      <div class="section-divider" data-i18n="sectionGoal">Zielsetzung</div>
+      <div class="form-group">
+        <label data-i18n="labelGoal">Berufliches Ziel</label>
+        <textarea id="f-goal" rows="3" data-i18n="placeholderGoal" data-i18n-attr="placeholder" placeholder="Was strebst du an?" oninput="render()"></textarea>
+      </div>
+    </div>
+
+    <!-- ── ERFAHRUNG ── -->
+    <div id="panel-experience" class="epanel">
+      <div class="section-divider" data-i18n="sectionExperience">Berufserfahrung</div>
+      <div id="exp-list"></div>
+      <button class="btn-add" onclick="addEntry('exp')" data-i18n="btnAddExperience">+ Berufserfahrung hinzufügen</button>
+    </div>
+
+    <!-- ── BILDUNG ── -->
+    <div id="panel-education" class="epanel">
+      <div class="section-divider" data-i18n="sectionEducation">Ausbildung &amp; Bildung</div>
+      <div id="edu-list"></div>
+      <button class="btn-add" onclick="addEntry('edu')" data-i18n="btnAddEducation">+ Bildungseintrag hinzufügen</button>
+    </div>
+
+    <!-- ── SKILLS ── -->
+    <div id="panel-skills" class="epanel">
+      <div class="section-divider" data-i18n="sectionTechSkills">Technische Skills</div>
+      <div id="skill-list"></div>
+      <button class="btn-add" onclick="addSkill()" data-i18n="btnAddSkill">+ Skill hinzufügen</button>
+
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionLanguages">Sprachen</div>
+      <div id="lang-list"></div>
+      <button class="btn-add" onclick="addLang()" data-i18n="btnAddLang">+ Sprache hinzufügen</button>
+
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionKomps">Kompetenzen</div>
+      <div class="form-group">
+        <label data-i18n="labelKomps">Kompetenzen (eine pro Zeile)</label>
+        <textarea id="f-komps" rows="5" data-i18n="placeholderKomps" data-i18n-attr="placeholder" placeholder="Analytisches Denkvermögen" oninput="render()"></textarea>
+      </div>
+
+      <div class="section-divider" style="margin-top:1rem;" data-i18n="sectionHobbies">Hobbys &amp; Interessen</div>
+      <div class="form-group">
+        <label data-i18n="labelHobbies">Hobbys (kommagetrennt)</label>
+        <input type="text" id="f-hobbies" data-i18n="placeholderHobbies" data-i18n-attr="placeholder" placeholder="Schach, Programmierung..." oninput="render()">
+      </div>
+    </div>
+
+    <!-- ── DESIGN ── -->
+    <div id="panel-design" class="epanel">
+      <div class="section-divider" data-i18n="sectionColor">Akzentfarbe</div>
+      <div class="color-options" id="color-picker"></div>
+
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionFont">Schriftart</div>
+      <div class="font-options" id="font-picker"></div>
+
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionPhotoDesign">Foto-Größe &amp; Rahmen</div>
+      <div class="form-group">
+        <label data-i18n="labelPhotoSize">Foto-Größe</label>: <span id="photo-size-label">120px</span>
+        <input type="range" id="f-photo-size" min="70" max="180" value="120" step="5"
+               oninput="document.getElementById('photo-size-label').textContent=this.value+'px';render()"
+               style="width:100%;accent-color:var(--g-muted);">
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelBorderSize">Rahmen-Stärke</label>: <span id="border-size-label">4px</span>
+        <input type="range" id="f-border-size" min="0" max="12" value="4" step="1"
+               oninput="document.getElementById('border-size-label').textContent=this.value+'px';render()"
+               style="width:100%;accent-color:var(--g-muted);">
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelBorderColor">Rahmen-Farbe</label>
+        <select id="f-border-color" onchange="render()">
+          <option value="rgba(255,255,255,0.9)" data-i18n="optWhite">Weiß</option>
+          <option value="rgba(255,255,255,0.4)" data-i18n="optWhiteTrans">Weiß (transparent)</option>
+          <option value="gold"                  data-i18n="optGold">Gold</option>
+          <option value="#c0c0c0"               data-i18n="optSilver">Silber</option>
+          <option value="rgba(0,0,0,0.3)"       data-i18n="optDark">Dunkel</option>
+        </select>
+      </div>
+
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionLayout">Layout-Optionen</div>
+      <div class="form-group">
+        <label data-i18n="labelAvatar">Foto / Initialen anzeigen</label>
+        <select id="f-avatar" onchange="render()">
+          <option value="initials" data-i18n="optInitials">Initialen</option>
+          <option value="none"     data-i18n="optNoneAvatar">Kein Foto</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ── SEITE 2 ── -->
+    <div id="panel-page2" class="epanel">
+      <div class="section-divider" data-i18n="sectionPage2">Seite 2 — Zusatzinhalt</div>
+      <div style="font-size:11px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;" data-i18n="page2Info">
+        Füge hier eine zweite Seite hinzu.
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelP2Title">Abschnittstitel</label>
+        <input type="text" id="p2-title" data-i18n="placeholderP2Title" data-i18n-attr="placeholder" placeholder="Projekte & Portfolio" oninput="render()">
+      </div>
+      <div id="p2-entries-list"></div>
+      <button class="btn-add" onclick="addPage2Entry()" data-i18n="btnAddP2Entry">+ Eintrag hinzufügen</button>
+
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionFreetext">Freitext</div>
+      <div class="form-group">
+        <label data-i18n="labelFreetext">Zusätzlicher Text</label>
+        <textarea id="p2-freetext" rows="4" data-i18n="placeholderFreetext" data-i18n-attr="placeholder"
+          placeholder="z.B. Ich freue mich über Ihre Einladung..." oninput="render()"></textarea>
+      </div>
+    </div>
+  </div><!-- end .editor -->
+
+  <!-- ════ PREVIEW ════ -->
+  <div class="preview" id="preview-area">
+    <div class="preview-toolbar">
+      <span class="preview-label" data-i18n="previewLabel">Vorschau</span>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div class="preview-zoom">
+          <button class="zoom-btn" onclick="changeZoom(-0.1)">−</button>
+          <span id="zoom-label">100%</span>
+          <button class="zoom-btn" onclick="changeZoom(0.1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seite 1 -->
+    <div class="cv-paper" id="cv-paper">
+      <div class="cv-left"  id="cv-left"></div>
+      <div class="cv-right" id="cv-right"></div>
+    </div>
+
+    <!-- Seite 2 -->
+    <div class="cv-paper" id="cv-paper-2" style="display:none;margin-top:2rem;">
+      <div class="cv-left"  id="cv-left-2"></div>
+      <div class="cv-right" id="cv-right-2"></div>
+    </div>
+  </div>
+
+</div><!-- end .app -->
+
+<!-- Load i18n first, then script -->
+<script src="i18n.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
 
