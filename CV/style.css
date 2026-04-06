@@ -205,12 +205,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.6; }
 /* ── CV PAPER ── */
 .cv-paper {
   background: #fff; width: 720px; min-height: 1050px;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.20);
   transform-origin: top center; transition: transform 0.2s;
-  display: grid; grid-template-columns: 240px 1fr;
-  overflow: hidden; border-radius: 2px;
-  /* Use table layout trick so left column always stretches to full height */
   display: table;
+  overflow: hidden; border-radius: 2px;
 }
 .cv-left, .cv-right {
   display: table-cell;
@@ -222,6 +220,24 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.6; }
   width: 240px;
   padding: 2.5rem 1.5rem;
 }
+
+/* High-quality photo rendering */
+.cv-left img {
+  display: block;
+  /* Prevent browser from blurring when downscaling */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  /* Subpixel anti-aliasing for the border */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Make links inside CV always clickable */
+.cv-left a, .cv-right a {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
 .cv-avatar-wrap { display: flex; justify-content: center; margin-bottom: 1.5rem; }
 .cv-avatar {
   width: 90px; height: 90px; border-radius: 50%;
@@ -231,58 +247,59 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.6; }
 }
 .cv-l-name {
   text-align: center; color: #fff;
-  font-size: 17px; font-weight: 700; line-height: 1.2; margin-bottom: 4px;
+  font-size: 16px; font-weight: 700; line-height: 1.3; margin-bottom: 5px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.18);
 }
 .cv-l-role {
-  text-align: center; font-size: 10px;
-  letter-spacing: 0.06em; text-transform: uppercase;
-  opacity: 0.65; margin-bottom: 1.75rem;
+  text-align: center; font-size: 9px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  opacity: 0.7; margin-bottom: 1.75rem;
 }
 .cv-l-section { margin-top: 1.25rem; }
 .cv-l-section-title {
-  font-size: 8.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  opacity: 0.55; border-bottom: 1px solid rgba(255,255,255,0.12);
+  font-size: 8px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  opacity: 0.5; border-bottom: 1px solid rgba(255,255,255,0.14);
   padding-bottom: 5px; margin-bottom: 10px;
 }
-.cv-contact-item   { margin-bottom: 8px; }
-.cv-contact-label  { font-size: 8.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.5; display: block; margin-bottom: 1px; }
-.cv-contact-val    { font-size: 11px; opacity: 0.85; line-height: 1.4; word-break: break-all; }
-.cv-skill-bar      { margin-bottom: 9px; }
-.cv-skill-name     { font-size: 11px; opacity: 0.85; margin-bottom: 3px; }
-.cv-skill-track    { height: 3px; background: rgba(255,255,255,0.15); border-radius: 2px; }
-.cv-skill-fill     { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.55); }
-.cv-lang-item      { margin-bottom: 8px; }
-.cv-lang-name      { font-size: 11px; opacity: 0.85; }
-.cv-lang-sub       { font-size: 10px; opacity: 0.5; }
-.cv-lang-dots      { display: flex; gap: 3px; margin-top: 3px; }
-.cv-lang-dot       { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.2); }
-.cv-lang-dot.on    { background: rgba(255,255,255,0.65); }
+.cv-contact-item   { margin-bottom: 9px; }
+.cv-contact-label  { font-size: 8px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.5; display: block; margin-bottom: 2px; }
+.cv-contact-val    { font-size: 11px; opacity: 0.88; line-height: 1.45; word-break: break-all; }
+.cv-skill-bar      { margin-bottom: 10px; }
+.cv-skill-name     { font-size: 11px; opacity: 0.88; margin-bottom: 4px; }
+.cv-skill-track    { height: 4px; background: rgba(255,255,255,0.12); border-radius: 2px; }
+.cv-skill-fill     { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.60); }
+.cv-lang-item      { margin-bottom: 9px; }
+.cv-lang-name      { font-size: 11px; opacity: 0.9; font-weight: 500; }
+.cv-lang-sub       { font-size: 9.5px; opacity: 0.5; margin-top: 1px; }
+.cv-lang-dots      { display: flex; gap: 4px; margin-top: 4px; }
+.cv-lang-dot       { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.18); }
+.cv-lang-dot.on    { background: rgba(255,255,255,0.72); }
 .cv-tag {
-  display: inline-block; background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.15); border-radius: 3px;
-  padding: 2px 8px; font-size: 10px; opacity: 0.8; margin: 2px 2px 2px 0;
+  display: inline-block; background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 4px;
+  padding: 3px 9px; font-size: 10px; opacity: 0.85; margin: 2px 2px 2px 0;
 }
 
 /* ── CV RIGHT ── */
-.cv-right        { padding: 2rem 2rem; }
-.cv-r-name       { font-size: 28px; font-weight: 700; color: #1e2e1d; line-height: 1.05; margin-bottom: 4px; }
-.cv-r-role       { font-size: 12px; margin-bottom: 12px; font-weight: 500; }
-.cv-divider      { height: 2px; margin-bottom: 1.25rem; border-radius: 1px; }
-.cv-summary      { font-size: 11px; color: #555; line-height: 1.75; margin-bottom: 0; }
+.cv-right        { padding: 2.25rem 2rem; }
+.cv-r-name       { font-size: 28px; font-weight: 800; color: #1a2818; line-height: 1.05; margin-bottom: 5px; letter-spacing: -0.3px; }
+.cv-r-role       { font-size: 12px; margin-bottom: 13px; font-weight: 500; letter-spacing: 0.02em; }
+.cv-divider      { height: 2.5px; margin-bottom: 1.3rem; border-radius: 2px; }
+.cv-summary      { font-size: 11.5px; color: #444; line-height: 1.85; margin-bottom: 0; }
 .cv-section-head {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  margin-top: 1.25rem; margin-bottom: 10px;
+  font-size: 8.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+  margin-top: 1.3rem; margin-bottom: 10px;
   display: flex; align-items: center; gap: 8px;
 }
-.cv-section-head::after { content: ''; flex: 1; height: 1px; background: #e0e8df; }
-.cv-entry        { margin-bottom: 10px; padding-left: 10px; border-left: 2px solid #e0e8df; }
+.cv-section-head::after { content: ''; flex: 1; height: 1px; background: #dde8db; }
+.cv-entry        { margin-bottom: 11px; padding-left: 11px; border-left: 2.5px solid #dde8db; }
 .cv-entry-head   { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
-.cv-entry-title  { font-weight: 700; font-size: 12px; color: #1e2e1d; }
-.cv-entry-date   { font-size: 10px; white-space: nowrap; font-weight: 500; }
-.cv-entry-sub    { font-size: 10.5px; font-style: italic; margin-top: 1px; }
-.cv-entry-desc   { font-size: 10.5px; color: #555; margin-top: 4px; line-height: 1.6; }
-.cv-komps        { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 6px; }
-.cv-komp         { font-size: 10px; color: #444; padding: 4px 8px; background: #f4f7f3; border-radius: 3px; border-left: 2px solid #8db08a; }
+.cv-entry-title  { font-weight: 700; font-size: 12.5px; color: #1a2818; }
+.cv-entry-date   { font-size: 10px; white-space: nowrap; font-weight: 500; opacity: 0.65; }
+.cv-entry-sub    { font-size: 11px; font-style: italic; margin-top: 2px; opacity: 0.72; }
+.cv-entry-desc   { font-size: 11px; color: #555; margin-top: 5px; line-height: 1.7; }
+.cv-komps        { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 7px; }
+.cv-komp         { font-size: 10.5px; color: #444; padding: 5px 9px; background: #f2f7f1; border-radius: 4px; border-left: 2.5px solid #8db08a; line-height: 1.4; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
