@@ -18,7 +18,7 @@ let expCount = 0, eduCount = 0, p2Count = 0;
 const COLORS = [
   { val: '#2d3d2c' }, { val: '#1a3a5c' }, { val: '#5c2d2d' },
   { val: '#2d2d4a' }, { val: '#3d3020' }, { val: '#1a4040' },
-  { val: '#4a3a1a' }, { val: '#2a2a2a' },
+  { val: '#4a3a1a' }, { val: '#2a2a2a' }, { val: '#8F9790' },
 ];
 
 const FONTS = [
@@ -283,8 +283,27 @@ function render() {
   const initials    = name.split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
 
   const avatarHTML = photoSrc
-    ? `<img src="${photoSrc}" style="width:${px};height:${px};border-radius:${borderRadius};object-fit:cover;border:${borderSize}px solid ${borderColor};display:block;box-shadow:0 2px 12px rgba(0,0,0,0.18);">`
-    : `<div class="cv-avatar" style="width:${px};height:${px};background-color:${colLight};font-family:${font};border-radius:${borderRadius};border:${borderSize}px solid ${borderColor};font-size:${Math.round(parseInt(photoSize)*0.28)}px;">${initials||'CV'}</div>`;
+    ? `<img src="${photoSrc}"
+        style="width:${px};height:${px};
+               border-radius:${borderRadius};
+               object-fit:cover;
+               object-position:center top;
+               border:${borderSize}px solid ${borderColor};
+               display:block;
+               box-shadow:0 4px 18px rgba(0,0,0,0.30);
+               image-rendering:-webkit-optimize-contrast;
+               image-rendering:crisp-edges;">`
+    : `<div class="cv-avatar"
+        style="width:${px};height:${px};
+               background:linear-gradient(145deg,${colLight} 0%,${col} 100%);
+               font-family:${font};
+               border-radius:${borderRadius};
+               border:${borderSize}px solid ${borderColor};
+               font-size:${Math.round(parseInt(photoSize)*0.28)}px;
+               box-shadow:0 4px 18px rgba(0,0,0,0.20);
+               letter-spacing:1px;">
+        ${initials||'CV'}
+      </div>`;
 
   // ── LEFT ──
   let leftHTML = `
@@ -518,40 +537,110 @@ function downloadPDF() {
   const filename = name.replace(/\s+/g,'_') + '_CV.pdf';
   showToast(t('toastPDFBuilding'));
 
-  const pages = [{paperId:'cv-paper',leftId:'cv-left',paper:document.getElementById('cv-paper'),left:document.getElementById('cv-left'),right:document.getElementById('cv-right')}];
-  const p2el  = document.getElementById('cv-paper-2');
-  if (p2el && p2el.style.display!=='none') pages.push({paperId:'cv-paper-2',leftId:'cv-left-2',paper:p2el,left:document.getElementById('cv-left-2'),right:document.getElementById('cv-right-2')});
+  const pages = [{
+    paperId:'cv-paper',   leftId:'cv-left',
+    paper:document.getElementById('cv-paper'),
+    left: document.getElementById('cv-left'),
+    right:document.getElementById('cv-right'),
+  }];
+  const p2el = document.getElementById('cv-paper-2');
+  if (p2el && p2el.style.display!=='none') pages.push({
+    paperId:'cv-paper-2', leftId:'cv-left-2',
+    paper:p2el,
+    left: document.getElementById('cv-left-2'),
+    right:document.getElementById('cv-right-2'),
+  });
 
-  const savedT = pages.map(p=>{const t=p.paper.style.transform; p.paper.style.transform='scale(1)'; return t;});
+  // Reset zoom to scale(1) for accurate pixel measurements
+  const savedT = pages.map(p => {
+    const saved = p.paper.style.transform;
+    p.paper.style.transform = 'scale(1)';
+    p.paper.style.transformOrigin = 'top center';
+    return saved;
+  });
 
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const heights = pages.map(p=>Math.max(p.paper.offsetHeight,p.left.scrollHeight,p.right.scrollHeight,1050));
-    const {jsPDF} = window.jspdf;
-    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const pW=210, pH=297;
+  // Helper: get element offset relative to an ancestor (scroll-safe)
+  function offsetRelativeTo(el, ancestor) {
+    let x = 0, y = 0, cur = el;
+    while (cur && cur !== ancestor) { x += cur.offsetLeft; y += cur.offsetTop; cur = cur.offsetParent; }
+    return { x, y, w: el.offsetWidth, h: el.offsetHeight };
+  }
+
+  // Two frames so browser fully repaints at scale(1) before we measure
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const heights = pages.map(p =>
+      Math.max(p.paper.offsetHeight, p.left.scrollHeight, p.right.scrollHeight, 1050)
+    );
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const pW = 210, pH = 297;
 
     const next = i => {
-      if (i>=pages.length) {
-        pages.forEach((p,idx)=>{ p.paper.style.transform=savedT[idx]; });
+      if (i >= pages.length) {
+        pages.forEach((p,idx) => { p.paper.style.transform = savedT[idx]; });
         pdf.save(filename);
         showToast(t('toastPDFDone'));
         return;
       }
-      const pg=pages[i], fullH=heights[i], col=state.color;
-      html2canvas(pg.paper,{
-        scale:3, useCORS:true, allowTaint:true, backgroundColor:'#ffffff', logging:false,
+      const pg = pages[i], fullH = heights[i], col = state.color;
+      const paperPxW = pg.paper.offsetWidth || 720;
+
+      // Collect links BEFORE capture (at scale 1, scroll-independent)
+      const rawLinks = [];
+      pg.paper.querySelectorAll('a[href]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        const pos = offsetRelativeTo(link, pg.paper);
+        rawLinks.push({ url:href, xPx:pos.x, yPx:pos.y,
+          wPx:Math.max(pos.w, 60), hPx:Math.max(pos.h, 14) });
+      });
+
+      html2canvas(pg.paper, {
+        scale: 4,            // ← 4× for crystal-clear PDF output
+        useCORS: true, allowTaint: true,
+        backgroundColor: '#ffffff', logging: false,
         onclone: doc => {
-          const cP=doc.getElementById(pg.paperId), cL=doc.getElementById(pg.leftId);
+          const cP = doc.getElementById(pg.paperId);
+          const cL = doc.getElementById(pg.leftId);
           if (cP) { cP.style.display='table'; cP.style.minHeight=fullH+'px'; cP.style.height=fullH+'px'; }
           if (cL) { cL.style.display='table-cell'; cL.style.height=fullH+'px'; cL.style.minHeight=fullH+'px'; cL.style.backgroundColor=col; cL.style.background=col; }
         },
-      }).then(canvas=>{
-        if (i>0) pdf.addPage();
-        const imgH=(canvas.height*pW)/canvas.width;
-        let posY=0, rem=imgH, first=true;
-        while(rem>0){ if(!first) pdf.addPage(); pdf.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',0,-posY,pW,imgH); posY+=pH; rem-=pH; first=false; }
-        next(i+1);
-      }).catch(err=>{ console.error(err); showToast(t('toastPDFError')); pages.forEach((p,idx)=>p.paper.style.transform=savedT[idx]); });
+      }).then(canvas => {
+        if (i > 0) pdf.addPage();
+        const firstPage = pdf.getNumberOfPages();
+        const imgH = (canvas.height * pW) / canvas.width;
+
+        // Insert image across as many PDF pages as needed
+        let posY = 0, rem = imgH, isFirst = true;
+        while (rem > 0) {
+          if (!isFirst) pdf.addPage();
+          pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, -posY, pW, imgH);
+          posY += pH; rem -= pH; isFirst = false;
+        }
+
+        // Overlay invisible clickable link annotations
+        const mmPerPxX = pW   / paperPxW;
+        const mmPerPxY = imgH / fullH;
+        rawLinks.forEach(({ url, xPx, yPx, wPx, hPx }) => {
+          const xMM = xPx * mmPerPxX;
+          const yMM = yPx * mmPerPxY;
+          const wMM = wPx * mmPerPxX;
+          const hMM = hPx * mmPerPxY;
+          const pageIdx   = Math.floor(yMM / pH);
+          const yOnPage   = yMM - pageIdx * pH;
+          const targetPg  = firstPage + pageIdx;
+          if (targetPg <= pdf.getNumberOfPages()) {
+            pdf.setPage(targetPg);
+            pdf.link(xMM, yOnPage, wMM, hMM, { url });
+          }
+        });
+        pdf.setPage(pdf.getNumberOfPages());
+        next(i + 1);
+      }).catch(err => {
+        console.error(err);
+        showToast(t('toastPDFError'));
+        pages.forEach((p,idx) => { p.paper.style.transform = savedT[idx]; });
+      });
     };
     next(0);
   }));
@@ -576,14 +665,44 @@ function handleDrop(e) {
   const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) readPhoto(f);
 }
 function readPhoto(file) {
-  const reader=new FileReader();
-  reader.onload=e=>{
-    state.photoData=e.target.result;
-    document.getElementById('photo-preview-img').src=e.target.result;
-    document.getElementById('photo-preview-name').textContent=file.name;
-    document.getElementById('photo-drop-zone').style.display='none';
-    document.getElementById('photo-preview-section').style.display='block';
-    render(); showToast(t('toastPhotoUploaded'));
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      // ── Process at high resolution for maximum sharpness ──
+      // We store a 600×600 pre-cropped version so the CV photo
+      // always looks crisp regardless of the original file size.
+      const SIZE = 600;
+      const canvas = document.createElement('canvas');
+      canvas.width  = SIZE;
+      canvas.height = SIZE;
+      const ctx = canvas.getContext('2d');
+
+      // Enable best-quality downsampling
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      // Smart crop: fit the largest square centred horizontally,
+      // biased toward the top third of the image (where faces usually are).
+      const scale = Math.max(SIZE / img.width, SIZE / img.height);
+      const cropW = SIZE / scale;
+      const cropH = SIZE / scale;
+      const cropX = (img.width  - cropW) / 2;             // centre X
+      const cropY = Math.max(0, (img.height - cropH) * 0.25); // bias to top
+
+      ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, SIZE, SIZE);
+
+      // Save as high-quality JPEG (0.95 = very sharp, reasonable file size)
+      state.photoData = canvas.toDataURL('image/jpeg', 0.95);
+
+      document.getElementById('photo-preview-img').src          = state.photoData;
+      document.getElementById('photo-preview-name').textContent  = file.name;
+      document.getElementById('photo-drop-zone').style.display    = 'none';
+      document.getElementById('photo-preview-section').style.display = 'block';
+      render();
+      showToast(t('toastPhotoUploaded'));
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
