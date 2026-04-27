@@ -342,12 +342,12 @@ function render() {
     leftHTML += `</div>`;
   }
 
-  const hobbies = val('f-hobbies');
-  if (hobbies) {
-    leftHTML += `<div class="cv-l-section"><div class="cv-l-section-title">${t('cvInterests')}</div><div>`;
-    hobbies.split(',').forEach(tag => { if(tag.trim()) leftHTML += `<span class="cv-tag">${h(tag.trim())}</span>`; });
-    leftHTML += `</div></div>`;
-  }
+  // ── HOBBYS & FÜHRERSCHEIN → beide auf die rechte Seite ──
+  const hobbies     = val('f-hobbies');
+  const hobbiesSize = (document.getElementById('f-hobbies-size')||{}).value || '10';
+  const LIC_CLASSES = ['AM','A1','A2','A','B','BE','C1','C1E','C','CE','D1','D','T','L'];
+  const activeLic   = LIC_CLASSES.filter(c => { const el = document.getElementById('lic-'+c); return el && el.checked; });
+  const licNote     = val('f-license-note');
 
   // ── RIGHT ──
   const webHref  = web ? (web.startsWith('http')?web:'https://'+web) : '#';
@@ -388,10 +388,63 @@ function render() {
     });
   }
 
+  // ── POSITIONS (links / rechts) ──
+  const kompsPos   = (document.getElementById('f-komps-pos')  ||{}).value || 'right';
+  const hobbiesPos = (document.getElementById('f-hobbies-pos')||{}).value || 'right';
+  const licensePos = (document.getElementById('f-license-pos')||{}).value || 'right';
+
+  // ── KOMPETENZEN ──
   if (komps.trim()) {
-    rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvKomps')}</div><div class="cv-komps">`;
-    komps.split('\n').forEach(k => { if(k.trim()) rightHTML += `<div class="cv-komp" style="border-left-color:${colLight};">${h(k.trim())}</div>`; });
-    rightHTML += `</div>`;
+    if (kompsPos === 'right') {
+      rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvKomps')}</div><div class="cv-komps">`;
+      komps.split('\n').forEach(k => { if(k.trim()) rightHTML += `<div class="cv-komp" style="border-left-color:${colLight};">${h(k.trim())}</div>`; });
+      rightHTML += `</div>`;
+    } else {
+      leftHTML += `<div class="cv-l-section"><div class="cv-l-section-title">${t('cvKomps')}</div>`;
+      komps.split('\n').forEach(k => { if(k.trim()) leftHTML += `<span class="cv-tag">${h(k.trim())}</span>`; });
+      leftHTML += `</div>`;
+    }
+  }
+
+  // ── HOBBYS & INTERESSEN ──
+  if (hobbies) {
+    if (hobbiesPos === 'right') {
+      rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvInterests')}</div>`;
+      rightHTML += `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;">`;
+      hobbies.split(',').forEach(tag => {
+        if (tag.trim()) rightHTML += `<span style="background:${colLight}22;border:1px solid ${colLight};border-radius:5px;padding:3px 10px;font-size:${hobbiesSize}px;color:#444;font-weight:500;">${h(tag.trim())}</span>`;
+      });
+      rightHTML += `</div>`;
+    } else {
+      leftHTML += `<div class="cv-l-section"><div class="cv-l-section-title">${t('cvInterests')}</div>`;
+      hobbies.split(',').forEach(tag => {
+        if (tag.trim()) leftHTML += `<span class="cv-tag" style="font-size:${hobbiesSize}px;">${h(tag.trim())}</span>`;
+      });
+      leftHTML += `</div>`;
+    }
+  }
+
+  // ── ZUSÄTZLICHE QUALIFIKATIONEN — FÜHRERSCHEIN ──
+  if (activeLic.length) {
+    if (licensePos === 'right') {
+      rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvExtraQual') || 'Zusätzliche Qualifikationen'}</div>`;
+      rightHTML += `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:600;color:#444;white-space:nowrap;">${t('cvLicense') || 'Führerschein'}:</span>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          ${activeLic.map(c => `<span style="background:${col};color:#fff;border-radius:5px;padding:2px 9px;font-size:10.5px;font-weight:700;letter-spacing:0.04em;">${c}</span>`).join('')}
+        </div>
+      </div>`;
+      if (licNote) rightHTML += `<div style="font-size:11px;color:#666;margin-top:3px;font-style:italic;">${h(licNote)}</div>`;
+    } else {
+      leftHTML += `<div class="cv-l-section"><div class="cv-l-section-title">${t('cvExtraQual')}</div>`;
+      leftHTML += `<div style="display:flex;flex-wrap:wrap;gap:4px;">`;
+      activeLic.forEach(c => {
+        leftHTML += `<span style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:#fff;">${c}</span>`;
+      });
+      leftHTML += `</div>`;
+      if (licNote) leftHTML += `<div style="font-size:10px;opacity:0.65;margin-top:5px;">${h(licNote)}</div>`;
+      leftHTML += `</div>`;
+    }
   }
 
   const cvLeft = document.getElementById('cv-left');
@@ -478,7 +531,10 @@ function saveData() {
     name:val('f-name'),role:val('f-role'),email:val('f-email'),phone:val('f-phone'),
     address:val('f-address'),birth:val('f-birth'),web:val('f-web'),webLabel:val('f-web-label'),
     summary:val('f-summary'),goal:val('f-goal'),komps:val('f-komps'),hobbies:val('f-hobbies'),
+    kompsPos:val('f-komps-pos')||'right', hobbiesPos:val('f-hobbies-pos')||'right', licensePos:val('f-license-pos')||'right',
     color:state.color,font:state.font,photoData:state.photoData,
+    license: ['AM','A1','A2','A','B','BE','C1','C1E','C','CE','D1','D','T','L'].filter(c=>{ const el=document.getElementById('lic-'+c); return el&&el.checked; }),
+    licenseNote: val('f-license-note'),
     exp:   state.exp.map(id=>({id,title:val('exp-title-'+id),company:val('exp-company-'+id),from:val('exp-from-'+id),to:val('exp-to-'+id),desc:val('exp-desc-'+id)})),
     edu:   state.edu.map(id=>({id,degree:val('edu-degree-'+id),school:val('edu-school-'+id),from:val('edu-from-'+id),to:val('edu-to-'+id)})),
     skills:state.skills.map(id=>({id,name:val('sk-name-'+id),pct:val('sk-pct-'+id)})),
@@ -498,6 +554,13 @@ function loadSaved() {
     setVal('f-summary',d.summary); setVal('f-goal',d.goal); setVal('f-komps',d.komps); setVal('f-hobbies',d.hobbies);
     if (d.color) state.color=d.color;
     if (d.font)  state.font=d.font;
+    if (d.license && Array.isArray(d.license)) {
+      d.license.forEach(c => { const el=document.getElementById('lic-'+c); if(el) el.checked=true; });
+    }
+    if (d.licenseNote) setVal('f-license-note', d.licenseNote);
+    if (d.kompsPos)   setVal('f-komps-pos',   d.kompsPos);
+    if (d.hobbiesPos) setVal('f-hobbies-pos', d.hobbiesPos);
+    if (d.licensePos) setVal('f-license-pos', d.licensePos);
     if (d.photoData) {
       state.photoData=d.photoData;
       document.getElementById('photo-preview-img').src=d.photoData;
