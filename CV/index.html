@@ -36,6 +36,24 @@
     [dir="rtl"] .etab   { letter-spacing: 0; }
     [dir="rtl"] .section-divider { letter-spacing: 0; }
     [dir="rtl"] .topbar-logo { font-family: 'Source Sans 3', sans-serif; }
+
+    /* Führerschein Checkboxen */
+    #license-class-checkboxes label {
+      background: var(--g-pale, #f0f4ef);
+      border: 1px solid var(--g-light, #c8d8c5);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-weight: 600;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    #license-class-checkboxes label:has(input:checked) {
+      background: var(--g-muted, #5a7358);
+      color: #fff;
+      border-color: var(--g-muted, #5a7358);
+    }
+    #license-class-checkboxes input[type="checkbox"] {
+      accent-color: var(--g-muted, #5a7358);
+    }
   </style>
 </head>
 <body>
@@ -194,13 +212,99 @@
         <label data-i18n="labelKomps">Kompetenzen (eine pro Zeile)</label>
         <textarea id="f-komps" rows="5" data-i18n="placeholderKomps" data-i18n-attr="placeholder" placeholder="Analytisches Denkvermögen" oninput="render()"></textarea>
       </div>
+      <div class="form-group">
+        <label data-i18n="labelSectionSide">Position im Lebenslauf</label>
+        <select id="f-komps-pos" onchange="render()">
+          <option value="right" data-i18n="optSideRight">Rechts</option>
+          <option value="left"  data-i18n="optSideLeft">Links</option>
+        </select>
+      </div>
 
       <div class="section-divider" style="margin-top:1rem;" data-i18n="sectionHobbies">Hobbys &amp; Interessen</div>
       <div class="form-group">
         <label data-i18n="labelHobbies">Hobbys (kommagetrennt)</label>
         <input type="text" id="f-hobbies" data-i18n="placeholderHobbies" data-i18n-attr="placeholder" placeholder="Schach, Programmierung..." oninput="render()">
       </div>
-    </div>
+      <div class="form-group">
+        <label data-i18n="labelHobbiesSize">Tag-Schriftgröße</label>: <span id="hobbies-size-label">10px</span>
+        <input type="range" id="f-hobbies-size" min="8" max="14" value="10" step="1"
+               oninput="document.getElementById('hobbies-size-label').textContent=this.value+'px';render()"
+               style="width:100%;accent-color:var(--g-muted);">
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelSectionSide">Position im Lebenslauf</label>
+        <select id="f-hobbies-pos" onchange="render()">
+          <option value="right" data-i18n="optSideRight">Rechts</option>
+          <option value="left"  data-i18n="optSideLeft">Links</option>
+        </select>
+      </div>
+
+      <!-- ── FÜHRERSCHEIN ── -->
+      <div class="section-divider" style="margin-top:1rem;" data-i18n="sectionLicense">Führerschein</div>
+      <div class="form-group">
+        <label data-i18n="labelLicenseClasses">Führerscheinklassen</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;" id="license-class-checkboxes">
+          <label>
+            <input type="checkbox" id="lic-AM" onchange="render()"> AM
+          </label>
+          <label>
+            <input type="checkbox" id="lic-A1" onchange="render()"> A1
+          </label>
+          <label>
+            <input type="checkbox" id="lic-A2" onchange="render()"> A2
+          </label>
+          <label>
+            <input type="checkbox" id="lic-A" onchange="render()"> A
+          </label>
+          <label>
+            <input type="checkbox" id="lic-B" onchange="render()" checked> B
+          </label>
+          <label>
+            <input type="checkbox" id="lic-BE" onchange="render()"> BE
+          </label>
+          <label>
+            <input type="checkbox" id="lic-C1" onchange="render()"> C1
+          </label>
+          <label>
+            <input type="checkbox" id="lic-C1E" onchange="render()"> C1E
+          </label>
+          <label>
+            <input type="checkbox" id="lic-C" onchange="render()"> C
+          </label>
+          <label>
+            <input type="checkbox" id="lic-CE" onchange="render()"> CE
+          </label>
+          <label>
+            <input type="checkbox" id="lic-D1" onchange="render()"> D1
+          </label>
+          <label>
+            <input type="checkbox" id="lic-D" onchange="render()"> D
+          </label>
+          <label>
+            <input type="checkbox" id="lic-T" onchange="render()"> T
+          </label>
+          <label>
+            <input type="checkbox" id="lic-L" onchange="render()"> L
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelLicenseNote">Zusatzinfo (optional)</label>
+        <input type="text" id="f-license-note"
+               data-i18n="placeholderLicenseNote"
+               data-i18n-attr="placeholder"
+               placeholder="z.B. Eigenes Fahrzeug vorhanden"
+               oninput="render()">
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelSectionSide">Position im Lebenslauf</label>
+        <select id="f-license-pos" onchange="render()">
+          <option value="right" data-i18n="optSideRight">Rechts</option>
+          <option value="left"  data-i18n="optSideLeft">Links</option>
+        </select>
+      </div>
+
+    </div><!-- end panel-skills -->
 
     <!-- ── DESIGN ── -->
     <div id="panel-design" class="epanel">
@@ -297,5 +401,31 @@
 <!-- Load i18n first, then script -->
 <script src="i18n.js"></script>
 <script src="script.js"></script>
+
+<!--
+  ══════════════════════════════════════════════════
+  FÜHRERSCHEIN – render()-Integration (Beispiel)
+  Füge diesen Snippet in deine render()-Funktion in
+  script.js ein, um die Klassen im CV anzuzeigen:
+
+  function getLicenseClasses() {
+    const classes = ['AM','A1','A2','A','B','BE','C1','C1E','C','CE','D1','D','T','L'];
+    const active = classes.filter(c => {
+      const el = document.getElementById('lic-' + c);
+      return el && el.checked;
+    });
+    const note = document.getElementById('f-license-note')?.value?.trim();
+    if (!active.length) return '';
+    let html = `<div class="cv-section">
+      <div class="cv-section-title">Führerschein</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+        ${active.map(c => `<span style="background:var(--accent);color:#fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">${c}</span>`).join('')}
+      </div>
+      ${note ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">${note}</div>` : ''}
+    </div>`;
+    return html;
+  }
+  ══════════════════════════════════════════════════
+-->
 </body>
 </html>
