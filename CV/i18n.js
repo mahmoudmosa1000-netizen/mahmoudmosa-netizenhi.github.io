@@ -105,6 +105,13 @@ const TRANSLATIONS = {
     labelSectionSide:    'Position im Lebenslauf',
     optSideRight:        '➡ Rechts',
     optSideLeft:         '⬅ Links (Seitenleiste)',
+    sectionExtraQuals:      'Weitere Qualifikationen',
+    btnAddExtraQual:        '+ Qualifikation hinzufügen',
+    labelExtraQual:         'Qualifikation',
+    labelExtraQualTitle:    'Bezeichnung',
+    labelExtraQualDetail:   'Details (optional)',
+    placeholderExtraQualTitle:  'z.B. Erste-Hilfe-Kurs',
+    placeholderExtraQualDetail: 'z.B. 2023',
 
     // Führerschein
     sectionLicense:         'Führerschein',
@@ -279,6 +286,13 @@ const TRANSLATIONS = {
     labelSectionSide:    'Position in CV',
     optSideRight:        '➡ Right',
     optSideLeft:         '⬅ Left (Sidebar)',
+    sectionExtraQuals:      'Additional Qualifications',
+    btnAddExtraQual:        '+ Add Qualification',
+    labelExtraQual:         'Qualification',
+    labelExtraQualTitle:    'Title',
+    labelExtraQualDetail:   'Details (optional)',
+    placeholderExtraQualTitle:  'e.g. First Aid Course',
+    placeholderExtraQualDetail: 'e.g. 2023',
 
     // Driver's License
     sectionLicense:         "Driver's License",
@@ -447,6 +461,13 @@ const TRANSLATIONS = {
     labelSectionSide:    'الموضع في السيرة الذاتية',
     optSideRight:        '➡ يمين',
     optSideLeft:         '⬅ يسار (الشريط الجانبي)',
+    sectionExtraQuals:      'مؤهلات إضافية أخرى',
+    btnAddExtraQual:        '+ إضافة مؤهل',
+    labelExtraQual:         'مؤهل',
+    labelExtraQualTitle:    'العنوان',
+    labelExtraQualDetail:   'تفاصيل (اختياري)',
+    placeholderExtraQualTitle:  'مثال: دورة إسعافات أولية',
+    placeholderExtraQualDetail: 'مثال: 2023',
 
     // رخصة القيادة
     sectionLicense:         'رخصة القيادة',
