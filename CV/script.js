@@ -1,781 +1,754 @@
 // ═══════════════════════════════════════════════
-//  CV BUILDER — script.js
+//  CV BUILDER — script.js  (v3 – alle Features)
 // ═══════════════════════════════════════════════
 
-// ── STATE ──
 let state = {
-  color:    '#3b4f3a',
-  font:     'Playfair Display',
-  photoData: '',
-  page2Entries: [],
-  exp: [], edu: [], skills: [], langs: [],
-  savedExp: [], savedEdu: [], savedSkills: [], savedLangs: []
+  color:'#3b4f3a', font:'Playfair Display', photoData:'',
+  page2Entries:[],
+  exp:[], edu:[], skills:[], langs:[], extraquals:[],
+  refs:[], certs:[], projects:[],
+  savedExp:[], savedEdu:[], savedSkills:[], savedLangs:[], savedExtraQuals:[],
+  savedRefs:[], savedCerts:[], savedProjects:[],
 };
 
-let zoom = 1;
-let expCount = 0, eduCount = 0, p2Count = 0;
+let zoom=1;
+let expCount=0, eduCount=0, p2Count=0, eqCount=0, refCount=0, certCount=0, projCount=0;
+let undoStack=[];
+let sectionOrder=['profile','experience','education','komps','hobbies','extraquals','referenzen','zertifikate','projekte'];
+let autoSaveTimer=null;
+let dragSrcId=null, dragType=null;
 
-const COLORS = [
-  { val: '#2d3d2c' }, { val: '#1a3a5c' }, { val: '#5c2d2d' },
-  { val: '#2d2d4a' }, { val: '#3d3020' }, { val: '#1a4040' },
-  { val: '#4a3a1a' }, { val: '#2a2a2a' }, { val: '#8F9790' },
+const COLORS=[
+  {val:'#2d3d2c'},{val:'#1a3a5c'},{val:'#5c2d2d'},
+  {val:'#2d2d4a'},{val:'#3d3020'},{val:'#1a4040'},
+  {val:'#4a3a1a'},{val:'#2a2a2a'},{val:'#8F9790'},
+];
+const FONTS=[
+  {val:'Playfair Display',label:'Playfair',   subKey:'fontClassic'},
+  {val:'Georgia',          label:'Georgia',    subKey:'fontTraditional'},
+  {val:'"Source Sans 3"',  label:'Source Sans',subKey:'fontModern'},
+  {val:'Verdana',          label:'Verdana',    subKey:'fontClear'},
+];
+const SECTION_LABELS={
+  profile:'Profil / Zusammenfassung', experience:'Berufserfahrung',
+  education:'Ausbildung & Bildung', komps:'Kompetenzen',
+  hobbies:'Hobbys & Interessen', extraquals:'Zus. Qualifikationen & Führerschein',
+  referenzen:'Referenzen', zertifikate:'Zertifikate & Kurse', projekte:'Projekte',
+};
+const ROLE_SUGGESTIONS=[
+  'Angehender Fachinformatiker','Softwareentwickler','Webentwickler','Full-Stack Developer',
+  'Frontend Developer','Backend Developer','DevOps Engineer','IT-Systemadministrator',
+  'Data Analyst','Data Scientist','UX/UI Designer','Grafikdesigner','Projektmanager',
+  'Kaufmann für Büromanagement','Mediengestalter','Mechatroniker','Elektriker',
+  'Krankenpfleger','Erzieher','Lehrer','Buchhalter','Controller','Marketing Manager',
+  'Vertriebsmitarbeiter','Logistiker','Lagerarbeiter','Koch','Verkäufer',
 ];
 
-const FONTS = [
-  { val: 'Playfair Display', label: 'Playfair',    subKey: 'fontClassic'     },
-  { val: 'Georgia',           label: 'Georgia',     subKey: 'fontTraditional' },
-  { val: '"Source Sans 3"',  label: 'Source Sans', subKey: 'fontModern'      },
-  { val: 'Verdana',           label: 'Verdana',     subKey: 'fontClear'       },
-];
-
-// ─────────────────────────────────────────────
-//  INIT
-// ─────────────────────────────────────────────
+// ─── INIT ───────────────────────────────────────
 function init() {
-  const isAr = currentLang === 'ar';
-  document.documentElement.setAttribute('dir',  isAr ? 'rtl' : 'ltr');
-  document.documentElement.setAttribute('lang', currentLang);
-  buildColorPicker();
-  buildFontPicker();
-  loadSaved();
-  buildDynamicLists();
-  applyTranslations();
-  render();
+  const isAr=currentLang==='ar';
+  document.documentElement.setAttribute('dir',isAr?'rtl':'ltr');
+  document.documentElement.setAttribute('lang',currentLang);
+  buildColorPicker(); buildFontPicker(); buildSectionOrderUI();
+  buildRoleSuggestions();
+  loadSaved(); buildDynamicLists();
+  applyTranslations(); buildProfilesList();
+  startAutoSave(); updateProgress(); render();
+}
+
+function buildRoleSuggestions() {
+  let dl=document.getElementById('role-suggestions');
+  if(!dl){dl=document.createElement('datalist');dl.id='role-suggestions';document.body.appendChild(dl);}
+  dl.innerHTML=ROLE_SUGGESTIONS.map(r=>`<option value="${r}">`).join('');
 }
 
 function buildColorPicker() {
-  const wrap = document.getElementById('color-picker');
-  COLORS.forEach(c => {
-    const el = document.createElement('div');
-    el.className = 'color-opt' + (state.color === c.val ? ' selected' : '');
-    el.style.backgroundColor = c.val;
-    el.onclick = () => {
-      state.color = c.val;
-      document.querySelectorAll('.color-opt').forEach(x => x.classList.remove('selected'));
-      el.classList.add('selected');
-      render();
+  const wrap=document.getElementById('color-picker'); if(!wrap) return;
+  COLORS.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='color-opt'+(state.color===c.val?' selected':'');
+    el.style.backgroundColor=c.val;
+    el.onclick=()=>{
+      state.color=c.val;
+      document.querySelectorAll('.color-opt').forEach(x=>x.classList.remove('selected'));
+      el.classList.add('selected'); render();
     };
     wrap.appendChild(el);
   });
 }
 
 function buildFontPicker() {
-  const wrap = document.getElementById('font-picker');
-  wrap.innerHTML = '';
-  FONTS.forEach(f => {
-    const el = document.createElement('div');
-    el.className = 'font-opt' + (state.font === f.val ? ' selected' : '');
-    el.innerHTML = `<div class="font-opt-name" style="font-family:${f.val}">${f.label}</div>
-                    <div class="font-opt-label">${t(f.subKey)}</div>`;
-    el.onclick = () => {
-      state.font = f.val;
-      document.querySelectorAll('.font-opt').forEach(x => x.classList.remove('selected'));
-      el.classList.add('selected');
-      render();
-    };
+  const wrap=document.getElementById('font-picker'); if(!wrap) return;
+  wrap.innerHTML='';
+  FONTS.forEach(f=>{
+    const el=document.createElement('div');
+    el.className='font-opt'+(state.font===f.val?' selected':'');
+    el.innerHTML=`<div class="font-opt-name" style="font-family:${f.val}">${f.label}</div><div class="font-opt-label">${t(f.subKey)}</div>`;
+    el.onclick=()=>{state.font=f.val;document.querySelectorAll('.font-opt').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');render();};
     wrap.appendChild(el);
   });
 }
 
-// ─────────────────────────────────────────────
-//  TABS
-// ─────────────────────────────────────────────
-function switchTab(id, btn) {
-  document.querySelectorAll('.etab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.epanel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('panel-' + id).classList.add('active');
+// ─── SECTION ORDER ──────────────────────────────
+function buildSectionOrderUI() {
+  const wrap=document.getElementById('section-order-list'); if(!wrap) return;
+  wrap.innerHTML='';
+  sectionOrder.forEach(key=>{
+    const item=document.createElement('div');
+    item.className='section-order-item'; item.draggable=true; item.dataset.key=key;
+    item.innerHTML=`<span class="so-handle">⠿</span><span>${SECTION_LABELS[key]||key}</span>`;
+    item.addEventListener('dragstart',e=>{dragSrcId=key;dragType='section';item.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    item.addEventListener('dragend',()=>item.classList.remove('dragging'));
+    item.addEventListener('dragover',e=>{e.preventDefault();item.classList.add('drag-over');});
+    item.addEventListener('dragleave',()=>item.classList.remove('drag-over'));
+    item.addEventListener('drop',e=>{
+      e.preventDefault();item.classList.remove('drag-over');
+      if(dragType!=='section'||dragSrcId===key) return;
+      const from=sectionOrder.indexOf(dragSrcId), to=sectionOrder.indexOf(key);
+      sectionOrder.splice(to,0,sectionOrder.splice(from,1)[0]);
+      buildSectionOrderUI(); render();
+    });
+    wrap.appendChild(item);
+  });
 }
 
-// ─────────────────────────────────────────────
-//  DYNAMIC ENTRY BUILDERS
-// ─────────────────────────────────────────────
-function addEntry(type, data = {}) {
-  const id   = Date.now() + '_' + Math.random().toString(36).slice(2);
-  const list = document.getElementById(type + '-list');
-  const num  = type === 'exp' ? ++expCount : ++eduCount;
-  const card = document.createElement('div');
-  card.className = 'entry-card';
-  card.id = type + '-' + id;
+// ─── TABS ───────────────────────────────────────
+function switchTab(id,btn) {
+  document.querySelectorAll('.etab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.epanel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active'); document.getElementById('panel-'+id).classList.add('active');
+}
 
-  if (type === 'exp') {
-    card.innerHTML = `
-      <div class="entry-card-header">
-        <span class="entry-card-label">${t('entryExperience')} #${num}</span>
-        <button class="btn-del" onclick="removeEntry('exp','${id}')">×</button>
-      </div>
-      <div class="form-group"><label>${t('labelJobTitle')}</label>
-        <input type="text" id="exp-title-${id}" value="${esc(data.title||'')}" placeholder="${t('placeholderJobTitle')}" oninput="render()">
-      </div>
-      <div class="form-group"><label>${t('labelCompany')}</label>
-        <input type="text" id="exp-company-${id}" value="${esc(data.company||'')}" placeholder="${t('placeholderCompany')}" oninput="render()">
-      </div>
+// ─── PROFILES ───────────────────────────────────
+function getProfiles(){try{return JSON.parse(localStorage.getItem('cvbuilder_profiles')||'[]');}catch{return[];}}
+function saveProfiles(arr){localStorage.setItem('cvbuilder_profiles',JSON.stringify(arr));}
+function getCurrentProfileId(){return localStorage.getItem('cvbuilder_current_profile')||'';}
+function setCurrentProfileId(id){localStorage.setItem('cvbuilder_current_profile',id);}
+
+function buildProfilesList(){
+  const wrap=document.getElementById('profiles-list'); if(!wrap) return;
+  const profiles=getProfiles(), curId=getCurrentProfileId();
+  wrap.innerHTML=profiles.length===0?`<div style="font-size:12px;color:#888;padding:8px 0;">Keine gespeicherten Profile</div>`:'';
+  profiles.forEach(p=>{
+    const row=document.createElement('div'); row.className='profile-row'+(p.id===curId?' active':'');
+    row.innerHTML=`<span class="profile-name">${h(p.name)}</span><div class="profile-btns"><button class="pbtn" onclick="loadProfile('${p.id}')">Laden</button><button class="pbtn danger" onclick="deleteProfile('${p.id}')">×</button></div>`;
+    wrap.appendChild(row);
+  });
+  const cnt=document.getElementById('profile-count'); if(cnt) cnt.textContent=profiles.length+'/5';
+}
+
+function saveAsProfile(){
+  const profiles=getProfiles();
+  if(profiles.length>=5){showToast('❌ Max. 5 Profile');return;}
+  const name=prompt('Profilname:','Profil '+(profiles.length+1)); if(!name) return;
+  const id='p_'+Date.now(), data=collectData();
+  profiles.push({id,name:name.trim(),data}); saveProfiles(profiles);
+  setCurrentProfileId(id); buildProfilesList(); showToast('✓ Profil gespeichert: '+name);
+}
+function loadProfile(id){
+  const p=getProfiles().find(x=>x.id===id); if(!p) return;
+  if(!confirm('Aktuellen Stand mit "'+p.name+'" überschreiben?')) return;
+  setCurrentProfileId(id); applyData(p.data); buildProfilesList(); showToast('✓ Profil geladen: '+p.name);
+  document.getElementById('profile-modal').style.display='none';
+}
+function deleteProfile(id){
+  let profiles=getProfiles(); const p=profiles.find(x=>x.id===id);
+  if(!p||!confirm('Profil "'+p.name+'" löschen?')) return;
+  profiles=profiles.filter(x=>x.id!==id); saveProfiles(profiles);
+  if(getCurrentProfileId()===id) setCurrentProfileId('');
+  buildProfilesList(); showToast('Profil gelöscht');
+}
+function openProfileModal(){buildProfilesList();document.getElementById('profile-modal').style.display='flex';}
+function closeProfileModal(){document.getElementById('profile-modal').style.display='none';}
+
+// ─── CHAR COUNTER ───────────────────────────────
+function updateCharCount(){
+  const el=document.getElementById('f-summary'), counter=document.getElementById('summary-char-count');
+  if(!el||!counter) return;
+  const len=el.value.length;
+  counter.textContent=len+' / 600';
+  counter.style.color=len>600?'#c0392b':len>480?'#e67e22':'#8a9e89';
+}
+
+// ─── PROGRESS ───────────────────────────────────
+function updateProgress(){
+  const fields=['f-name','f-role','f-email','f-phone','f-address','f-summary'];
+  const filled=fields.filter(id=>val(id).trim().length>0).length;
+  const bonus=(state.exp.length>0?1:0)+(state.edu.length>0?1:0)+(state.skills.length>0?1:0)+(state.photoData?1:0);
+  const pct=Math.round(((filled+bonus)/(fields.length+4))*100);
+  const bar=document.getElementById('progress-fill'), label=document.getElementById('progress-label');
+  if(bar){bar.style.width=pct+'%'; bar.style.background=pct>=80?'#5a7358':pct>=50?'#e67e22':'#c0392b';}
+  if(label) label.textContent=pct+'%';
+}
+
+// ─── AUTO-SAVE ──────────────────────────────────
+function startAutoSave(){
+  if(autoSaveTimer) clearInterval(autoSaveTimer);
+  autoSaveTimer=setInterval(()=>saveData(true),30000);
+}
+
+// ─── QR CODE ────────────────────────────────────
+function generateQR(){
+  const url=val('f-web')||val('f-email')||'https://beispiel.de';
+  const target=document.getElementById('qr-output'); if(!target) return;
+  target.innerHTML='';
+  try{
+    const qr=qrcode(0,'M'); qr.addData(url.startsWith('http')?url:'https://'+url); qr.make();
+    target.innerHTML=qr.createImgTag(4,8);
+    const img=target.querySelector('img'); if(img){img.style.borderRadius='8px';img.style.display='block';img.style.margin='0 auto';}
+    const lbl=document.getElementById('qr-url-label'); if(lbl) lbl.textContent=url;
+  }catch(e){target.textContent='QR konnte nicht erstellt werden.';}
+}
+
+// ─── LINKEDIN / JSON RESUME IMPORT ──────────────
+function triggerImport(){document.getElementById('import-file-input').click();}
+function handleImport(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{importJsonResume(JSON.parse(ev.target.result));}
+    catch{showToast('❌ Ungültiges JSON-Format');}
+  };
+  reader.readAsText(file); e.target.value='';
+}
+function importJsonResume(d){
+  if(d.basics){
+    if(d.basics.name)    setVal('f-name',d.basics.name);
+    if(d.basics.label)   setVal('f-role',d.basics.label);
+    if(d.basics.email)   setVal('f-email',d.basics.email);
+    if(d.basics.phone)   setVal('f-phone',d.basics.phone);
+    if(d.basics.url)     setVal('f-web',d.basics.url);
+    if(d.basics.summary) setVal('f-summary',d.basics.summary);
+    if(d.basics.location){
+      const loc=d.basics.location;
+      setVal('f-address',[loc.city,loc.country].filter(Boolean).join(', '));
+    }
+  }
+  if(Array.isArray(d.work)) d.work.forEach(w=>addEntry('exp',{title:w.position||'',company:w.name||w.company||'',from:w.startDate||'',to:w.endDate||'heute',desc:w.summary||(Array.isArray(w.highlights)?w.highlights.join('\n'):'')}));
+  if(Array.isArray(d.education)) d.education.forEach(e=>addEntry('edu',{degree:[e.studyType,e.area].filter(Boolean).join(' – ')||e.institution||'',school:e.institution||'',from:e.startDate||'',to:e.endDate||''}));
+  if(Array.isArray(d.skills)) setVal('f-komps',d.skills.map(s=>s.name).filter(Boolean).join('\n'));
+  if(Array.isArray(d.languages)){
+    const m={native:'Muttersprache',fluent:'Fortgeschritten',advanced:'Fortgeschritten',intermediate:'Mittelstufe',beginner:'Grundkenntnisse'};
+    d.languages.forEach(l=>addLang({name:l.language||'',lvl:m[(l.fluency||'').toLowerCase()]||'Mittelstufe'}));
+  }
+  if(Array.isArray(d.interests)) setVal('f-hobbies',d.interests.map(i=>i.name).filter(Boolean).join(', '));
+  if(Array.isArray(d.references)) d.references.forEach(r=>addRef({name:r.name||'',note:r.reference||''}));
+  if(Array.isArray(d.projects)) d.projects.forEach(p=>addProject({title:p.name||'',url:p.url||'',desc:p.description||(Array.isArray(p.highlights)?p.highlights.join('\n'):''),from:p.startDate||'',to:p.endDate||''}));
+  if(Array.isArray(d.certificates)||Array.isArray(d.awards)){
+    (d.certificates||d.awards||[]).forEach(c=>addCert({title:c.name||c.title||'',issuer:c.awarder||c.issuer||'',date:c.date||'',url:c.url||''}));
+  }
+  render(); updateProgress(); showToast('✓ Daten importiert!');
+}
+
+// ─── DRAG & DROP FOR CARDS ──────────────────────
+function makeDraggable(card, listId, stateArr){
+  card.draggable=true;
+  card.addEventListener('dragstart',e=>{dragSrcId=card.id;dragType='card';card.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+  card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+  card.addEventListener('dragover',e=>{e.preventDefault();if(dragType==='card') card.classList.add('drag-over');});
+  card.addEventListener('dragleave',()=>card.classList.remove('drag-over'));
+  card.addEventListener('drop',e=>{
+    e.preventDefault();card.classList.remove('drag-over');
+    if(dragType!=='card'||!dragSrcId||dragSrcId===card.id) return;
+    const list=document.getElementById(listId), srcEl=document.getElementById(dragSrcId);
+    if(!srcEl||!list) return;
+    const cards=[...list.children];
+    const srcIdx=cards.indexOf(srcEl), dstIdx=cards.indexOf(card);
+    if(srcIdx<dstIdx) list.insertBefore(srcEl,card.nextSibling); else list.insertBefore(srcEl,card);
+    // sync state array by card id suffix
+    const getSuffix=id=>id.split('-').slice(1).join('-');
+    const srcId=getSuffix(dragSrcId), dstId=getSuffix(card.id);
+    const si=stateArr.indexOf(srcId), di=stateArr.indexOf(dstId);
+    if(si>-1&&di>-1) stateArr.splice(di,0,stateArr.splice(si,1)[0]);
+    render();
+  });
+}
+
+// ─── UNDO ───────────────────────────────────────
+function pushUndo(type,data){
+  undoStack.push({type,data});
+  if(undoStack.length>10) undoStack.shift();
+  showUndoToast();
+}
+function showUndoToast(){
+  let el=document.getElementById('undo-toast');
+  if(!el){
+    el=document.createElement('div');el.id='undo-toast';
+    Object.assign(el.style,{position:'fixed',bottom:'4rem',right:'1.5rem',background:'#1a2419',color:'#fff',padding:'10px 16px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',zIndex:'9998',display:'flex',gap:'12px',alignItems:'center',transition:'opacity 0.3s',boxShadow:'0 4px 16px rgba(0,0,0,0.3)',opacity:'0'});
+    document.body.appendChild(el);
+  }
+  el.innerHTML=`<span>Eintrag gelöscht</span><button onclick="undoDelete()" style="background:var(--g-light);color:var(--g-dark);border:none;border-radius:4px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;">↩ Rückgängig</button>`;
+  el.style.opacity='1';clearTimeout(el._to);el._to=setTimeout(()=>{el.style.opacity='0';},4500);
+}
+function undoDelete(){
+  const item=undoStack.pop(); if(!item) return;
+  const el=document.getElementById('undo-toast'); if(el) el.style.opacity='0';
+  const{type,data}=item;
+  if(type==='exp') addEntry('exp',data);
+  else if(type==='edu') addEntry('edu',data);
+  else if(type==='skill') addSkill(data);
+  else if(type==='lang') addLang(data);
+  else if(type==='extraqual') addExtraQual(data);
+  else if(type==='ref') addRef(data);
+  else if(type==='cert') addCert(data);
+  else if(type==='project') addProject(data);
+  else if(type==='p2entry') addPage2Entry(data);
+}
+
+// ─── ENTRY BUILDERS ─────────────────────────────
+function addEntry(type,data={}){
+  const id=Date.now()+'_'+Math.random().toString(36).slice(2);
+  const list=document.getElementById(type+'-list');
+  const num=type==='exp'?++expCount:++eduCount;
+  const card=document.createElement('div'); card.className='entry-card'; card.id=type+'-'+id;
+  if(type==='exp'){
+    card.innerHTML=`
+      <div class="entry-card-header"><span class="drag-handle" title="Ziehen">⠿</span><span class="entry-card-label">${t('entryExperience')} #${num}</span><button class="btn-del" onclick="removeEntry('exp','${id}')">×</button></div>
+      <div class="form-group"><label>${t('labelJobTitle')}</label><input type="text" id="exp-title-${id}" value="${esc(data.title||'')}" list="role-suggestions" placeholder="${t('placeholderJobTitle')}" oninput="render()"></div>
+      <div class="form-group"><label>${t('labelCompany')}</label><input type="text" id="exp-company-${id}" value="${esc(data.company||'')}" placeholder="${t('placeholderCompany')}" oninput="render()"></div>
       <div class="form-row">
-        <div class="form-group"><label>${t('labelFrom')}</label>
-          <input type="text" id="exp-from-${id}" value="${esc(data.from||'')}" placeholder="${t('placeholderFrom')}" oninput="render()">
-        </div>
-        <div class="form-group"><label>${t('labelTo')}</label>
-          <input type="text" id="exp-to-${id}" value="${esc(data.to||'')}" placeholder="${t('placeholderTo')}" oninput="render()">
-        </div>
+        <div class="form-group"><label>${t('labelFrom')}</label><input type="text" id="exp-from-${id}" value="${esc(data.from||'')}" placeholder="${t('placeholderFrom')}" oninput="render()"></div>
+        <div class="form-group"><label>${t('labelTo')}</label><input type="text" id="exp-to-${id}" value="${esc(data.to||'')}" placeholder="${t('placeholderTo')}" oninput="render()"></div>
       </div>
-      <div class="form-group"><label>${t('labelDesc')}</label>
-        <textarea id="exp-desc-${id}" placeholder="${t('placeholderDesc')}" oninput="render()">${esc(data.desc||'')}</textarea>
-      </div>`;
+      <div class="form-group"><label>${t('labelDesc')}</label><textarea id="exp-desc-${id}" placeholder="${t('placeholderDesc')}" oninput="render()">${esc(data.desc||'')}</textarea></div>`;
     state.exp.push(id);
   } else {
-    card.innerHTML = `
-      <div class="entry-card-header">
-        <span class="entry-card-label">${t('entryEducation')} #${num}</span>
-        <button class="btn-del" onclick="removeEntry('edu','${id}')">×</button>
-      </div>
-      <div class="form-group"><label>${t('labelDegree')}</label>
-        <input type="text" id="edu-degree-${id}" value="${esc(data.degree||'')}" placeholder="${t('placeholderDegree')}" oninput="render()">
-      </div>
-      <div class="form-group"><label>${t('labelSchool')}</label>
-        <input type="text" id="edu-school-${id}" value="${esc(data.school||'')}" placeholder="${t('placeholderSchool')}" oninput="render()">
-      </div>
+    card.innerHTML=`
+      <div class="entry-card-header"><span class="drag-handle">⠿</span><span class="entry-card-label">${t('entryEducation')} #${num}</span><button class="btn-del" onclick="removeEntry('edu','${id}')">×</button></div>
+      <div class="form-group"><label>${t('labelDegree')}</label><input type="text" id="edu-degree-${id}" value="${esc(data.degree||'')}" placeholder="${t('placeholderDegree')}" oninput="render()"></div>
+      <div class="form-group"><label>${t('labelSchool')}</label><input type="text" id="edu-school-${id}" value="${esc(data.school||'')}" placeholder="${t('placeholderSchool')}" oninput="render()"></div>
       <div class="form-row">
-        <div class="form-group"><label>${t('labelFrom')}</label>
-          <input type="text" id="edu-from-${id}" value="${esc(data.from||'')}" placeholder="${t('placeholderFrom')}" oninput="render()">
-        </div>
-        <div class="form-group"><label>${t('labelTo')}</label>
-          <input type="text" id="edu-to-${id}" value="${esc(data.to||'')}" placeholder="${t('placeholderTo')}" oninput="render()">
-        </div>
+        <div class="form-group"><label>${t('labelFrom')}</label><input type="text" id="edu-from-${id}" value="${esc(data.from||'')}" placeholder="${t('placeholderFrom')}" oninput="render()"></div>
+        <div class="form-group"><label>${t('labelTo')}</label><input type="text" id="edu-to-${id}" value="${esc(data.to||'')}" placeholder="${t('placeholderTo')}" oninput="render()"></div>
       </div>`;
     state.edu.push(id);
   }
-  list.appendChild(card);
-  render();
+  list.appendChild(card); makeDraggable(card,type+'-list',state[type]); render();
 }
 
-function removeEntry(type, id) {
-  const el = document.getElementById(type + '-' + id);
-  if (el) el.remove();
-  state[type] = state[type].filter(x => x !== id);
-  render();
+function removeEntry(type,id){
+  const data=type==='exp'?{title:val('exp-title-'+id),company:val('exp-company-'+id),from:val('exp-from-'+id),to:val('exp-to-'+id),desc:val('exp-desc-'+id)}:{degree:val('edu-degree-'+id),school:val('edu-school-'+id),from:val('edu-from-'+id),to:val('edu-to-'+id)};
+  pushUndo(type,data);
+  const el=document.getElementById(type+'-'+id); if(el) el.remove();
+  state[type]=state[type].filter(x=>x!==id); render(); updateProgress();
 }
 
-function addSkill(data = {}) {
-  const id   = Date.now() + '_' + Math.random().toString(36).slice(2);
-  const card = document.createElement('div');
-  card.className = 'entry-card';
-  card.id = 'skill-' + id;
-  card.innerHTML = `
-    <div class="entry-card-header">
-      <span class="entry-card-label">Skill</span>
-      <button class="btn-del" onclick="removeSkill('${id}')">×</button>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>${t('labelSkillName')}</label>
-        <input type="text" id="sk-name-${id}" value="${esc(data.name||'')}" placeholder="${t('placeholderSkill')}" oninput="render()">
-      </div>
-      <div class="form-group"><label>${t('labelSkillLevel')}</label>
-        <input type="text" id="sk-pct-${id}" value="${data.pct||'50'}" placeholder="50" oninput="render()">
-      </div>
-    </div>`;
-  document.getElementById('skill-list').appendChild(card);
-  state.skills.push(id);
-  render();
+function addSkill(data={}){
+  const id=Date.now()+'_'+Math.random().toString(36).slice(2);
+  const card=document.createElement('div'); card.className='entry-card'; card.id='skill-'+id;
+  card.innerHTML=`<div class="entry-card-header"><span class="drag-handle">⠿</span><span class="entry-card-label">Skill</span><button class="btn-del" onclick="removeSkill('${id}')">×</button></div>
+    <div class="form-row"><div class="form-group"><label>${t('labelSkillName')}</label><input type="text" id="sk-name-${id}" value="${esc(data.name||'')}" placeholder="${t('placeholderSkill')}" oninput="render()"></div>
+    <div class="form-group"><label>${t('labelSkillLevel')}</label><input type="text" id="sk-pct-${id}" value="${data.pct||'50'}" placeholder="50" oninput="render()"></div></div>`;
+  document.getElementById('skill-list').appendChild(card); state.skills.push(id); makeDraggable(card,'skill-list',state.skills); render();
 }
+function removeSkill(id){pushUndo('skill',{name:val('sk-name-'+id),pct:val('sk-pct-'+id)});const el=document.getElementById('skill-'+id);if(el)el.remove();state.skills=state.skills.filter(x=>x!==id);render();updateProgress();}
 
-function removeSkill(id) {
-  const el = document.getElementById('skill-' + id);
-  if (el) el.remove();
-  state.skills = state.skills.filter(x => x !== id);
-  render();
+function addLang(data={}){
+  const id=Date.now()+'_'+Math.random().toString(36).slice(2);
+  const card=document.createElement('div'); card.className='entry-card'; card.id='lang-'+id;
+  card.innerHTML=`<div class="entry-card-header"><span class="drag-handle">⠿</span><span class="entry-card-label">${t('labelLangName')}</span><button class="btn-del" onclick="removeLang('${id}')">×</button></div>
+    <div class="form-row"><div class="form-group"><label>${t('labelLangName')}</label><input type="text" id="ln-name-${id}" value="${esc(data.name||'')}" placeholder="${t('placeholderLang')}" oninput="render()"></div>
+    <div class="form-group"><label>${t('labelLangLevel')}</label><select id="ln-lvl-${id}" onchange="render()">
+      <option value="Muttersprache" ${data.lvl==='Muttersprache'?'selected':''}>${t('optNative')}</option>
+      <option value="Fortgeschritten" ${data.lvl==='Fortgeschritten'?'selected':''}>${t('optAdvanced')}</option>
+      <option value="Mittelstufe" ${data.lvl==='Mittelstufe'?'selected':''}>${t('optIntermediate')}</option>
+      <option value="Grundkenntnisse" ${data.lvl==='Grundkenntnisse'?'selected':''}>${t('optBasic')}</option>
+    </select></div></div>`;
+  document.getElementById('lang-list').appendChild(card); state.langs.push(id); makeDraggable(card,'lang-list',state.langs); render();
 }
+function removeLang(id){pushUndo('lang',{name:val('ln-name-'+id),lvl:val('ln-lvl-'+id)});const el=document.getElementById('lang-'+id);if(el)el.remove();state.langs=state.langs.filter(x=>x!==id);render();}
 
-function addLang(data = {}) {
-  const id   = Date.now() + '_' + Math.random().toString(36).slice(2);
-  const card = document.createElement('div');
-  card.className = 'entry-card';
-  card.id = 'lang-' + id;
-  card.innerHTML = `
-    <div class="entry-card-header">
-      <span class="entry-card-label">${t('labelLangName')}</span>
-      <button class="btn-del" onclick="removeLang('${id}')">×</button>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>${t('labelLangName')}</label>
-        <input type="text" id="ln-name-${id}" value="${esc(data.name||'')}" placeholder="${t('placeholderLang')}" oninput="render()">
-      </div>
-      <div class="form-group"><label>${t('labelLangLevel')}</label>
-        <select id="ln-lvl-${id}" onchange="render()">
-          <option value="Muttersprache"   ${data.lvl==='Muttersprache'  ?'selected':''}>${t('optNative')}</option>
-          <option value="Fortgeschritten" ${data.lvl==='Fortgeschritten'?'selected':''}>${t('optAdvanced')}</option>
-          <option value="Mittelstufe"     ${data.lvl==='Mittelstufe'    ?'selected':''}>${t('optIntermediate')}</option>
-          <option value="Grundkenntnisse" ${data.lvl==='Grundkenntnisse'?'selected':''}>${t('optBasic')}</option>
-        </select>
-      </div>
-    </div>`;
-  document.getElementById('lang-list').appendChild(card);
-  state.langs.push(id);
-  render();
+function addExtraQual(data={}){
+  const id=Date.now()+'_'+Math.random().toString(36).slice(2); const num=++eqCount;
+  const card=document.createElement('div'); card.className='entry-card'; card.id='eq-'+id;
+  card.innerHTML=`<div class="entry-card-header"><span class="drag-handle">⠿</span><span class="entry-card-label">${t('labelExtraQual')||'Qualifikation'} #${num}</span><button class="btn-del" onclick="removeExtraQual('${id}')">×</button></div>
+    <div class="form-row"><div class="form-group"><label>${t('labelExtraQualTitle')||'Bezeichnung'}</label><input type="text" id="eq-title-${id}" value="${esc(data.title||'')}" placeholder="${t('placeholderExtraQualTitle')||'z.B. Erste-Hilfe-Kurs'}" oninput="render()"></div>
+    <div class="form-group"><label>${t('labelExtraQualDetail')||'Details'}</label><input type="text" id="eq-detail-${id}" value="${esc(data.detail||'')}" placeholder="${t('placeholderExtraQualDetail')||'z.B. 2023'}" oninput="render()"></div></div>`;
+  document.getElementById('extraqual-list').appendChild(card); state.extraquals.push(id); makeDraggable(card,'extraqual-list',state.extraquals); render();
 }
+function removeExtraQual(id){pushUndo('extraqual',{title:val('eq-title-'+id),detail:val('eq-detail-'+id)});const el=document.getElementById('eq-'+id);if(el)el.remove();state.extraquals=state.extraquals.filter(x=>x!==id);render();}
 
-function removeLang(id) {
-  const el = document.getElementById('lang-' + id);
-  if (el) el.remove();
-  state.langs = state.langs.filter(x => x !== id);
-  render();
+function addRef(data={}){
+  const id=Date.now()+'_'+Math.random().toString(36).slice(2); const num=++refCount;
+  const card=document.createElement('div'); card.className='entry-card'; card.id='ref-'+id;
+  card.innerHTML=`<div class="entry-card-header"><span class="drag-handle">⠿</span><span class="entry-card-label">Referenz #${num}</span><button class="btn-del" onclick="removeRef('${id}')">×</button></div>
+    <div class="form-row"><div class="form-group"><label>Name</label><input type="text" id="ref-name-${id}" value="${esc(data.name||'')}" placeholder="Maria Müller" oninput="render()"></div>
+    <div class="form-group"><label>Position</label><input type="text" id="ref-pos-${id}" value="${esc(data.pos||'')}" placeholder="Abteilungsleiter" oninput="render()"></div></div>
+    <div class="form-row"><div class="form-group"><label>Unternehmen</label><input type="text" id="ref-company-${id}" value="${esc(data.company||'')}" placeholder="Firma GmbH" oninput="render()"></div>
+    <div class="form-group"><label>E-Mail</label><input type="email" id="ref-email-${id}" value="${esc(data.email||'')}" placeholder="m@firma.de" oninput="render()"></div></div>
+    <div class="form-row"><div class="form-group"><label>Telefon</label><input type="text" id="ref-phone-${id}" value="${esc(data.phone||'')}" placeholder="+49 ..." oninput="render()"></div>
+    <div class="form-group"><label>Anmerkung</label><input type="text" id="ref-note-${id}" value="${esc(data.note||'')}" placeholder="Direkter Vorgesetzter" oninput="render()"></div></div>`;
+  document.getElementById('ref-list').appendChild(card); state.refs.push(id); makeDraggable(card,'ref-list',state.refs); render();
 }
+function removeRef(id){pushUndo('ref',{name:val('ref-name-'+id),pos:val('ref-pos-'+id),company:val('ref-company-'+id),email:val('ref-email-'+id),phone:val('ref-phone-'+id),note:val('ref-note-'+id)});const el=document.getElementById('ref-'+id);if(el)el.remove();state.refs=state.refs.filter(x=>x!==id);render();}
 
-function addPage2Entry(data = {}) {
-  const id   = Date.now() + '_' + Math.random().toString(36).slice(2);
-  const num  = ++p2Count;
-  const card = document.createElement('div');
-  card.className = 'entry-card';
-  card.id = 'p2e-' + id;
-  card.innerHTML = `
-    <div class="entry-card-header">
-      <span class="entry-card-label">${t('entryP2')} #${num}</span>
-      <button class="btn-del" onclick="removePage2Entry('${id}')">×</button>
-    </div>
-    <div class="form-group"><label>${t('labelP2EntryTitle')}</label>
-      <input type="text" id="p2e-title-${id}" value="${esc(data.title||'')}" placeholder="${t('placeholderP2Title2')}" oninput="render()">
-    </div>
-    <div class="form-group"><label>${t('labelP2Sub')}</label>
-      <input type="text" id="p2e-sub-${id}" value="${esc(data.sub||'')}" placeholder="${t('placeholderP2Sub')}" oninput="render()">
-    </div>
-    <div class="form-group"><label>${t('labelP2Desc')}</label>
-      <textarea id="p2e-desc-${id}" placeholder="${t('placeholderP2Desc')}" oninput="render()">${esc(data.desc||'')}</textarea>
-    </div>`;
-  document.getElementById('p2-entries-list').appendChild(card);
-  state.page2Entries.push(id);
-  render();
+function addCert(data={}){
+  const id=Date.now()+'_'+Math.random().toString(36).slice(2); const num=++certCount;
+  const card=document.createElement('div'); card.className='entry-card'; card.id='cert-'+id;
+  card.innerHTML=`<div class="entry-card-header"><span class="drag-handle">⠿</span><span class="entry-card-label">Zertifikat #${num}</span><button class="btn-del" onclick="removeCert('${id}')">×</button></div>
+    <div class="form-group"><label>Titel</label><input type="text" id="cert-title-${id}" value="${esc(data.title||'')}" placeholder="z.B. AWS Cloud Practitioner" oninput="render()"></div>
+    <div class="form-row"><div class="form-group"><label>Aussteller</label><input type="text" id="cert-issuer-${id}" value="${esc(data.issuer||'')}" placeholder="Amazon / Coursera" oninput="render()"></div>
+    <div class="form-group"><label>Datum</label><input type="text" id="cert-date-${id}" value="${esc(data.date||'')}" placeholder="MM.JJJJ" oninput="render()"></div></div>
+    <div class="form-group"><label>URL (optional)</label><input type="text" id="cert-url-${id}" value="${esc(data.url||'')}" placeholder="https://..." oninput="render()"></div>`;
+  document.getElementById('cert-list').appendChild(card); state.certs.push(id); makeDraggable(card,'cert-list',state.certs); render();
 }
+function removeCert(id){pushUndo('cert',{title:val('cert-title-'+id),issuer:val('cert-issuer-'+id),date:val('cert-date-'+id),url:val('cert-url-'+id)});const el=document.getElementById('cert-'+id);if(el)el.remove();state.certs=state.certs.filter(x=>x!==id);render();}
 
-function removePage2Entry(id) {
-  const el = document.getElementById('p2e-' + id);
-  if (el) el.remove();
-  state.page2Entries = state.page2Entries.filter(x => x !== id);
-  render();
+function addProject(data={}){
+  const id=Date.now()+'_'+Math.random().toString(36).slice(2); const num=++projCount;
+  const card=document.createElement('div'); card.className='entry-card'; card.id='proj-'+id;
+  card.innerHTML=`<div class="entry-card-header"><span class="drag-handle">⠿</span><span class="entry-card-label">Projekt #${num}</span><button class="btn-del" onclick="removeProject('${id}')">×</button></div>
+    <div class="form-row"><div class="form-group"><label>Projektname</label><input type="text" id="proj-title-${id}" value="${esc(data.title||'')}" placeholder="z.B. Portfolio-Website" oninput="render()"></div>
+    <div class="form-group"><label>URL / Link</label><input type="text" id="proj-url-${id}" value="${esc(data.url||'')}" placeholder="https://github.com/..." oninput="render()"></div></div>
+    <div class="form-row"><div class="form-group"><label>Von</label><input type="text" id="proj-from-${id}" value="${esc(data.from||'')}" placeholder="Jan 2024" oninput="render()"></div>
+    <div class="form-group"><label>Bis</label><input type="text" id="proj-to-${id}" value="${esc(data.to||'')}" placeholder="heute" oninput="render()"></div></div>
+    <div class="form-group"><label>Beschreibung</label><textarea id="proj-desc-${id}" placeholder="Was hast du gebaut / erreicht?" oninput="render()">${esc(data.desc||'')}</textarea></div>`;
+  document.getElementById('proj-list').appendChild(card); state.projects.push(id); makeDraggable(card,'proj-list',state.projects); render();
 }
+function removeProject(id){pushUndo('project',{title:val('proj-title-'+id),url:val('proj-url-'+id),from:val('proj-from-'+id),to:val('proj-to-'+id),desc:val('proj-desc-'+id)});const el=document.getElementById('proj-'+id);if(el)el.remove();state.projects=state.projects.filter(x=>x!==id);render();}
 
-// ─────────────────────────────────────────────
-//  RENDER CV
-// ─────────────────────────────────────────────
-function render() {
-  const col      = state.color;
-  const font     = state.font;
-  const colLight = lighten(col, 0.55);
-  const colDark2 = colLight2(col);
+function addPage2Entry(data={}){
+  const id=Date.now()+'_'+Math.random().toString(36).slice(2); const num=++p2Count;
+  const card=document.createElement('div'); card.className='entry-card'; card.id='p2e-'+id;
+  card.innerHTML=`<div class="entry-card-header"><span class="drag-handle">⠿</span><span class="entry-card-label">${t('entryP2')} #${num}</span><button class="btn-del" onclick="removePage2Entry('${id}')">×</button></div>
+    <div class="form-group"><label>${t('labelP2EntryTitle')}</label><input type="text" id="p2e-title-${id}" value="${esc(data.title||'')}" placeholder="${t('placeholderP2Title2')}" oninput="render()"></div>
+    <div class="form-group"><label>${t('labelP2Sub')}</label><input type="text" id="p2e-sub-${id}" value="${esc(data.sub||'')}" placeholder="${t('placeholderP2Sub')}" oninput="render()"></div>
+    <div class="form-group"><label>${t('labelP2Desc')}</label><textarea id="p2e-desc-${id}" placeholder="${t('placeholderP2Desc')}" oninput="render()">${esc(data.desc||'')}</textarea></div>`;
+  document.getElementById('p2-entries-list').appendChild(card); state.page2Entries.push(id); makeDraggable(card,'p2-entries-list',state.page2Entries); render();
+}
+function removePage2Entry(id){pushUndo('p2entry',{title:val('p2e-title-'+id),sub:val('p2e-sub-'+id),desc:val('p2e-desc-'+id)});const el=document.getElementById('p2e-'+id);if(el)el.remove();state.page2Entries=state.page2Entries.filter(x=>x!==id);render();}
 
-  const name     = val('f-name')     || (currentLang==='ar'?'اسمك':currentLang==='en'?'Your Name':'Dein Name');
-  const role     = val('f-role')     || (currentLang==='ar'?'المسمى الوظيفي':currentLang==='en'?'Job Title':'Berufsbezeichnung');
-  const email    = val('f-email');
-  const phone    = val('f-phone');
-  const address  = val('f-address');
-  const birth    = val('f-birth');
-  const web      = val('f-web');
-  const webLabel = val('f-web-label') || 'Website';
-  const summary  = val('f-summary');
-  const goal     = val('f-goal');
-  const komps    = val('f-komps');
+// ─── RENDER ─────────────────────────────────────
+function render(){
+  const col=state.color, font=state.font;
+  const colLight=lighten(col,0.55), colDark2=colLight2(col);
+  const fScale=parseInt((document.getElementById('f-font-scale')||{}).value||'100')/100;
+  const lineH=(document.getElementById('f-line-height')||{}).value||'1.75';
+  const rightBg=(document.getElementById('f-right-bg')||{}).value||'#ffffff';
 
-  const photoSrc    = state.photoData || '';
-  const photoShape  = (document.getElementById('f-photo-shape') ||{}).value || 'circle';
-  const borderRadius = photoShape==='square' ? '10px' : '50%';
-  const photoSize   = (document.getElementById('f-photo-size')  ||{}).value || '120';
-  const borderSize  = (document.getElementById('f-border-size') ||{}).value || '4';
-  const borderColor = (document.getElementById('f-border-color')||{}).value || 'rgba(255,255,255,0.9)';
-  const px          = photoSize + 'px';
-  const initials    = name.split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
+  const name=val('f-name')||(currentLang==='ar'?'اسمك':currentLang==='en'?'Your Name':'Dein Name');
+  const role=val('f-role')||(currentLang==='ar'?'المسمى الوظيفي':currentLang==='en'?'Job Title':'Berufsbezeichnung');
+  const email=val('f-email'),phone=val('f-phone'),address=val('f-address'),birth=val('f-birth'),web=val('f-web');
+  const webLabel=val('f-web-label')||'Website', summary=val('f-summary'), goal=val('f-goal'), komps=val('f-komps');
 
-  const avatarHTML = photoSrc
-    ? `<img src="${photoSrc}"
-        style="width:${px};height:${px};
-               border-radius:${borderRadius};
-               object-fit:cover;
-               object-position:center top;
-               border:${borderSize}px solid ${borderColor};
-               display:block;
-               box-shadow:0 4px 18px rgba(0,0,0,0.30);
-               image-rendering:-webkit-optimize-contrast;
-               image-rendering:crisp-edges;">`
-    : `<div class="cv-avatar"
-        style="width:${px};height:${px};
-               background:linear-gradient(145deg,${colLight} 0%,${col} 100%);
-               font-family:${font};
-               border-radius:${borderRadius};
-               border:${borderSize}px solid ${borderColor};
-               font-size:${Math.round(parseInt(photoSize)*0.28)}px;
-               box-shadow:0 4px 18px rgba(0,0,0,0.20);
-               letter-spacing:1px;">
-        ${initials||'CV'}
-      </div>`;
+  const photoSrc=state.photoData||'';
+  const photoShape=(document.getElementById('f-photo-shape')||{}).value||'circle';
+  const borderRadius=photoShape==='square'?'10px':'50%';
+  const photoSize=(document.getElementById('f-photo-size')||{}).value||'120';
+  const borderSize=(document.getElementById('f-border-size')||{}).value||'4';
+  const borderColor=(document.getElementById('f-border-color')||{}).value||'rgba(255,255,255,0.9)';
+  const px=photoSize+'px';
+  const initials=name.split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
 
-  // ── LEFT ──
-  let leftHTML = `
+  const avatarHTML=photoSrc
+    ?`<img src="${photoSrc}" style="width:${px};height:${px};border-radius:${borderRadius};object-fit:cover;object-position:center top;border:${borderSize}px solid ${borderColor};display:block;box-shadow:0 4px 18px rgba(0,0,0,0.30);">`
+    :`<div class="cv-avatar" style="width:${px};height:${px};background:linear-gradient(145deg,${colLight} 0%,${col} 100%);font-family:${font};border-radius:${borderRadius};border:${borderSize}px solid ${borderColor};font-size:${Math.round(parseInt(photoSize)*0.28)}px;box-shadow:0 4px 18px rgba(0,0,0,0.20);">${initials||'CV'}</div>`;
+
+  const hobbies=val('f-hobbies');
+  const hobbiesSize=(document.getElementById('f-hobbies-size')||{}).value||'10';
+  const LIC=['AM','A1','A2','A','B','BE','C1','C1E','C','CE','D1','D','T','L'];
+  const activeLic=LIC.filter(c=>{const el=document.getElementById('lic-'+c);return el&&el.checked;});
+  const licNote=val('f-license-note');
+  const kompsPos=(document.getElementById('f-komps-pos')||{}).value||'right';
+  const hobbiesPos=(document.getElementById('f-hobbies-pos')||{}).value||'right';
+  const licensePos=(document.getElementById('f-license-pos')||{}).value||'right';
+
+  // LEFT
+  let leftHTML=`
     <div class="cv-avatar-wrap">${avatarHTML}</div>
-    <div class="cv-l-name" style="font-family:${font};">${h(name)}</div>
-    <div class="cv-l-role">${h(role)}</div>
-    <div class="cv-l-section">
-      <div class="cv-l-section-title">${t('cvContact')}</div>
-      ${email   ? `<div class="cv-contact-item"><span class="cv-contact-label">${t('cvEmail')}</span><span class="cv-contact-val">${h(email)}</span></div>` : ''}
-      ${phone   ? `<div class="cv-contact-item"><span class="cv-contact-label">${t('cvPhone')}</span><span class="cv-contact-val">${h(phone)}</span></div>` : ''}
-      ${address ? `<div class="cv-contact-item"><span class="cv-contact-label">${t('cvAddress')}</span><span class="cv-contact-val">${h(address)}</span></div>` : ''}
-      ${birth   ? `<div class="cv-contact-item"><span class="cv-contact-label">${t('cvBirth')}</span><span class="cv-contact-val">${h(birth)}</span></div>` : ''}
-      ${web ? (()=>{ const href=web.startsWith('http')?web:'https://'+web; return `<div class="cv-contact-item"><span class="cv-contact-label">${t('cvWeb')}</span><span class="cv-contact-val"><a href="${href}" target="_blank" style="color:inherit;text-decoration:underline;font-weight:700;">${h(webLabel)}</a></span></div>`; })() : ''}
+    <div class="cv-l-name" style="font-family:${font};font-size:${Math.round(16*fScale)}px;">${h(name)}</div>
+    <div class="cv-l-role" style="font-size:${Math.round(9*fScale)}px;">${h(role)}</div>
+    <div class="cv-l-section"><div class="cv-l-section-title">${t('cvContact')}</div>
+      ${email?`<div class="cv-contact-item"><span class="cv-contact-label">${t('cvEmail')}</span><span class="cv-contact-val" style="font-size:${Math.round(11*fScale)}px;">${h(email)}</span></div>`:''}
+      ${phone?`<div class="cv-contact-item"><span class="cv-contact-label">${t('cvPhone')}</span><span class="cv-contact-val" style="font-size:${Math.round(11*fScale)}px;">${h(phone)}</span></div>`:''}
+      ${address?`<div class="cv-contact-item"><span class="cv-contact-label">${t('cvAddress')}</span><span class="cv-contact-val" style="font-size:${Math.round(11*fScale)}px;">${h(address)}</span></div>`:''}
+      ${birth?`<div class="cv-contact-item"><span class="cv-contact-label">${t('cvBirth')}</span><span class="cv-contact-val" style="font-size:${Math.round(11*fScale)}px;">${h(birth)}</span></div>`:''}
+      ${web?(()=>{const href=web.startsWith('http')?web:'https://'+web;return`<div class="cv-contact-item"><span class="cv-contact-label">${t('cvWeb')}</span><span class="cv-contact-val"><a href="${href}" target="_blank" style="color:inherit;text-decoration:underline;font-weight:700;font-size:${Math.round(11*fScale)}px;">${h(webLabel)}</a></span></div>`;})():''}
     </div>`;
 
-  const activeSkills = state.skills.filter(id => val('sk-name-'+id));
-  if (activeSkills.length) {
-    leftHTML += `<div class="cv-l-section"><div class="cv-l-section-title">${t('cvSkills')}</div>`;
-    activeSkills.forEach(id => {
-      const n = val('sk-name-'+id), p = Math.min(100,Math.max(0,parseInt(val('sk-pct-'+id))||50));
-      leftHTML += `<div class="cv-skill-bar"><div class="cv-skill-name">${h(n)}</div><div class="cv-skill-track"><div class="cv-skill-fill" style="width:${p}%"></div></div></div>`;
-    });
-    leftHTML += `</div>`;
+  const activeSkills=state.skills.filter(id=>val('sk-name-'+id));
+  if(activeSkills.length){
+    leftHTML+=`<div class="cv-l-section"><div class="cv-l-section-title">${t('cvSkills')}</div>`;
+    activeSkills.forEach(id=>{const n=val('sk-name-'+id),p=Math.min(100,Math.max(0,parseInt(val('sk-pct-'+id))||50));leftHTML+=`<div class="cv-skill-bar"><div class="cv-skill-name" style="font-size:${Math.round(11*fScale)}px;">${h(n)}</div><div class="cv-skill-track"><div class="cv-skill-fill" style="width:${p}%"></div></div></div>`;});
+    leftHTML+=`</div>`;
+  }
+  const activeLangs=state.langs.filter(id=>val('ln-name-'+id));
+  if(activeLangs.length){
+    leftHTML+=`<div class="cv-l-section"><div class="cv-l-section-title">${t('cvLanguages')}</div>`;
+    activeLangs.forEach(id=>{const n=val('ln-name-'+id),lv=val('ln-lvl-'+id);const dots={Muttersprache:5,Fortgeschritten:4,Mittelstufe:3,Grundkenntnisse:2}[lv]||3;const lvLabel=lv==='Muttersprache'?t('optNative'):lv==='Fortgeschritten'?t('optAdvanced'):lv==='Mittelstufe'?t('optIntermediate'):t('optBasic');let dotHtml='';for(let i=0;i<5;i++)dotHtml+=`<div class="cv-lang-dot${i<dots?' on':''}"></div>`;leftHTML+=`<div class="cv-lang-item"><div class="cv-lang-name" style="font-size:${Math.round(11*fScale)}px;">${h(n)}</div><div class="cv-lang-sub">${lvLabel}</div><div class="cv-lang-dots">${dotHtml}</div></div>`;});
+    leftHTML+=`</div>`;
   }
 
-  const activeLangs = state.langs.filter(id => val('ln-name-'+id));
-  if (activeLangs.length) {
-    leftHTML += `<div class="cv-l-section"><div class="cv-l-section-title">${t('cvLanguages')}</div>`;
-    activeLangs.forEach(id => {
-      const n = val('ln-name-'+id), lv = val('ln-lvl-'+id);
-      const dots = {Muttersprache:5,Fortgeschritten:4,Mittelstufe:3,Grundkenntnisse:2}[lv]||3;
-      const lvLabel = lv==='Muttersprache'?t('optNative'):lv==='Fortgeschritten'?t('optAdvanced'):lv==='Mittelstufe'?t('optIntermediate'):t('optBasic');
-      let dotHtml=''; for(let i=0;i<5;i++) dotHtml+=`<div class="cv-lang-dot${i<dots?' on':''}"></div>`;
-      leftHTML += `<div class="cv-lang-item"><div class="cv-lang-name">${h(n)}</div><div class="cv-lang-sub">${lvLabel}</div><div class="cv-lang-dots">${dotHtml}</div></div>`;
-    });
-    leftHTML += `</div>`;
-  }
+  const webHref=web?(web.startsWith('http')?web:'https://'+web):'#';
+  const webLink=web?`<a href="${webHref}" target="_blank" style="color:${col};text-decoration:underline;font-weight:700;">${h(webLabel)}</a>`:h(webLabel);
+  const renderTxt=txt=>h(txt).replace(/%%WEBSITE%%/g,webLink);
 
-  // ── HOBBYS & FÜHRERSCHEIN → beide auf die rechte Seite ──
-  const hobbies     = val('f-hobbies');
-  const hobbiesSize = (document.getElementById('f-hobbies-size')||{}).value || '10';
-  const LIC_CLASSES = ['AM','A1','A2','A','B','BE','C1','C1E','C','CE','D1','D','T','L'];
-  const activeLic   = LIC_CLASSES.filter(c => { const el = document.getElementById('lic-'+c); return el && el.checked; });
-  const licNote     = val('f-license-note');
-
-  // ── RIGHT ──
-  const webHref  = web ? (web.startsWith('http')?web:'https://'+web) : '#';
-  const webLink  = web ? `<a href="${webHref}" target="_blank" style="color:${col};text-decoration:underline;font-weight:700;">${h(webLabel)}</a>` : h(webLabel);
-  const renderTxt = txt => h(txt).replace(/%%WEBSITE%%/g, webLink);
-
-  let rightHTML = `
-    <div class="cv-r-name" style="font-family:${font};">${h(name)}</div>
-    <div class="cv-r-role" style="color:${colDark2};">${h(role)}</div>
+  // RIGHT header
+  let rightHTML=`
+    <div class="cv-r-name" style="font-family:${font};font-size:${Math.round(28*fScale)}px;">${h(name)}</div>
+    <div class="cv-r-role" style="color:${colDark2};font-size:${Math.round(12*fScale)}px;">${h(role)}</div>
     <div class="cv-divider" style="background:linear-gradient(90deg,${col} 0%,${colLight} 60%,transparent 100%);"></div>`;
 
-  if (summary||goal) {
-    rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvProfile')}</div>`;
-    if (summary) rightHTML += `<div class="cv-summary">${renderTxt(summary)}</div>`;
-    if (goal)    rightHTML += `<div class="cv-summary" style="margin-top:6px;font-style:italic;color:#666;">${renderTxt(goal)}</div>`;
+  // Section renderers
+  const renderers={
+    profile:()=>{
+      let s='';
+      if(summary||goal){
+        s+=`<div class="cv-section-head" style="color:${col};font-size:${Math.round(8.5*fScale)}px;">${t('cvProfile')}</div>`;
+        if(summary) s+=`<div class="cv-summary" style="font-size:${Math.round(11.5*fScale)}px;line-height:${lineH};">${renderTxt(summary)}</div>`;
+        if(goal) s+=`<div class="cv-summary" style="font-size:${Math.round(11.5*fScale)}px;line-height:${lineH};margin-top:6px;font-style:italic;color:#666;">${renderTxt(goal)}</div>`;
+      }
+      return s;
+    },
+    experience:()=>{
+      const entries=state.exp.map(id=>({title:val('exp-title-'+id),company:val('exp-company-'+id),from:val('exp-from-'+id),to:val('exp-to-'+id),desc:val('exp-desc-'+id)})).filter(e=>e.title||e.company);
+      if(!entries.length) return '';
+      let s=`<div class="cv-section-head" style="color:${col};font-size:${Math.round(8.5*fScale)}px;">${t('cvExperience')}</div>`;
+      entries.forEach(e=>{s+=`<div class="cv-entry" style="border-left-color:${colLight};"><div class="cv-entry-head"><span class="cv-entry-title" style="font-size:${Math.round(12.5*fScale)}px;">${h(e.title)}</span><span class="cv-entry-date" style="color:${colDark2};font-size:${Math.round(10*fScale)}px;">${h(e.from)}${e.to?' – '+h(e.to):''}</span></div>${e.company?`<div class="cv-entry-sub" style="color:${colDark2};font-size:${Math.round(11*fScale)}px;">${h(e.company)}</div>`:''} ${e.desc?`<div class="cv-entry-desc" style="font-size:${Math.round(11*fScale)}px;line-height:${lineH};">${h(e.desc).replace(/\n/g,'<br>')}</div>`:''}</div>`;});
+      return s;
+    },
+    education:()=>{
+      const entries=state.edu.map(id=>({degree:val('edu-degree-'+id),school:val('edu-school-'+id),from:val('edu-from-'+id),to:val('edu-to-'+id)})).filter(e=>e.degree||e.school);
+      if(!entries.length) return '';
+      let s=`<div class="cv-section-head" style="color:${col};font-size:${Math.round(8.5*fScale)}px;">${t('cvEducation')}</div>`;
+      entries.forEach(e=>{s+=`<div class="cv-entry" style="border-left-color:${colLight};"><div class="cv-entry-head"><span class="cv-entry-title" style="font-size:${Math.round(12.5*fScale)}px;">${h(e.degree)}</span><span class="cv-entry-date" style="color:${colDark2};font-size:${Math.round(10*fScale)}px;">${h(e.from)}${e.to?' – '+h(e.to):''}</span></div>${e.school?`<div class="cv-entry-sub" style="color:${colDark2};font-size:${Math.round(11*fScale)}px;">${h(e.school)}</div>`:''}</div>`;});
+      return s;
+    },
+    komps:()=>{
+      if(!komps.trim()) return '';
+      if(kompsPos==='left'){leftHTML+=`<div class="cv-l-section"><div class="cv-l-section-title">${t('cvKomps')}</div>`;komps.split('\n').forEach(k=>{if(k.trim())leftHTML+=`<span class="cv-tag">${h(k.trim())}</span>`;});leftHTML+=`</div>`;return '';}
+      let s=`<div class="cv-section-head" style="color:${col};font-size:${Math.round(8.5*fScale)}px;">${t('cvKomps')}</div><div class="cv-komps">`;
+      komps.split('\n').forEach(k=>{if(k.trim())s+=`<div class="cv-komp" style="border-left-color:${colLight};font-size:${Math.round(10.5*fScale)}px;">${h(k.trim())}</div>`;});
+      return s+`</div>`;
+    },
+    hobbies:()=>{
+      if(!hobbies) return '';
+      if(hobbiesPos==='left'){leftHTML+=`<div class="cv-l-section"><div class="cv-l-section-title">${t('cvInterests')}</div>`;hobbies.split(',').forEach(tag=>{if(tag.trim())leftHTML+=`<span class="cv-tag" style="font-size:${hobbiesSize}px;">${h(tag.trim())}</span>`;});leftHTML+=`</div>`;return '';}
+      let s=`<div class="cv-section-head" style="color:${col};font-size:${Math.round(8.5*fScale)}px;">${t('cvInterests')}</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;">`;
+      hobbies.split(',').forEach(tag=>{if(tag.trim())s+=`<span style="background:${colLight}22;border:1px solid ${colLight};border-radius:5px;padding:3px 10px;font-size:${hobbiesSize}px;color:#444;font-weight:500;">${h(tag.trim())}</span>`;});
+      return s+`</div>`;
+    },
+    extraquals:()=>{
+      const eqEntries=state.extraquals.map(id=>({title:val('eq-title-'+id),detail:val('eq-detail-'+id)})).filter(e=>e.title);
+      if(!activeLic.length&&!eqEntries.length) return '';
+      if(licensePos==='left'){
+        leftHTML+=`<div class="cv-l-section"><div class="cv-l-section-title">${t('cvExtraQual')}</div>`;
+        if(activeLic.length){leftHTML+=`<div style="margin-bottom:7px;"><div style="font-size:9px;font-weight:700;opacity:0.55;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${t('cvLicense')||'Führerschein'}</div><div style="display:flex;flex-wrap:wrap;gap:4px;">${activeLic.map(c=>`<span style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:#fff;">${c}</span>`).join('')}</div>${licNote?`<div style="font-size:10px;opacity:0.6;margin-top:4px;font-style:italic;">${h(licNote)}</div>`:''}</div>`;}
+        eqEntries.forEach(e=>{leftHTML+=`<div style="margin-bottom:6px;"><div style="font-size:11px;font-weight:600;opacity:0.9;">${h(e.title)}</div>${e.detail?`<div style="font-size:10px;opacity:0.55;margin-top:1px;">${h(e.detail)}</div>`:''}</div>`;});
+        leftHTML+=`</div>`; return '';
+      }
+      let s=`<div class="cv-section-head" style="color:${col};font-size:${Math.round(8.5*fScale)}px;">${t('cvExtraQual')}</div>`;
+      if(activeLic.length){s+=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;"><span style="font-size:${Math.round(11*fScale)}px;font-weight:600;color:#444;">${t('cvLicense')||'Führerschein'}:</span><div style="display:flex;flex-wrap:wrap;gap:5px;">${activeLic.map(c=>`<span style="background:${col};color:#fff;border-radius:5px;padding:2px 9px;font-size:${Math.round(10.5*fScale)}px;font-weight:700;">${c}</span>`).join('')}</div></div>`;if(licNote)s+=`<div style="font-size:${Math.round(11*fScale)}px;color:#666;margin-bottom:6px;font-style:italic;">${h(licNote)}</div>`;}
+      if(eqEntries.length){s+=`<div class="cv-komps" style="margin-top:4px;">`;eqEntries.forEach(e=>{s+=`<div class="cv-komp" style="border-left-color:${colLight};font-size:${Math.round(10.5*fScale)}px;"><span style="font-weight:700;">${h(e.title)}</span>${e.detail?`<span style="font-size:${Math.round(10*fScale)}px;color:#888;display:block;margin-top:2px;">${h(e.detail)}</span>`:''}</div>`;});s+=`</div>`;}
+      return s;
+    },
+    referenzen:()=>{
+      const refs=state.refs.map(id=>({name:val('ref-name-'+id),pos:val('ref-pos-'+id),company:val('ref-company-'+id),email:val('ref-email-'+id),phone:val('ref-phone-'+id),note:val('ref-note-'+id)})).filter(r=>r.name);
+      if(!refs.length) return '';
+      let s=`<div class="cv-section-head" style="color:${col};font-size:${Math.round(8.5*fScale)}px;">Referenzen</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">`;
+      refs.forEach(r=>{s+=`<div style="background:#f8faf8;border-radius:6px;padding:10px 12px;border-left:2.5px solid ${colLight};"><div style="font-weight:700;font-size:${Math.round(12*fScale)}px;color:#1a2818;">${h(r.name)}</div>${r.pos?`<div style="font-size:${Math.round(10.5*fScale)}px;font-style:italic;color:${colDark2};">${h(r.pos)}</div>`:''} ${r.company?`<div style="font-size:${Math.round(10.5*fScale)}px;color:#555;">${h(r.company)}</div>`:''} ${r.email?`<div style="font-size:${Math.round(10*fScale)}px;color:#666;margin-top:4px;">${h(r.email)}</div>`:''} ${r.phone?`<div style="font-size:${Math.round(10*fScale)}px;color:#666;">${h(r.phone)}</div>`:''} ${r.note?`<div style="font-size:${Math.round(10*fScale)}px;color:#999;font-style:italic;">${h(r.note)}</div>`:''}</div>`;});
+      return s+`</div>`;
+    },
+    zertifikate:()=>{
+      const certs=state.certs.map(id=>({title:val('cert-title-'+id),issuer:val('cert-issuer-'+id),date:val('cert-date-'+id),url:val('cert-url-'+id)})).filter(c=>c.title);
+      if(!certs.length) return '';
+      let s=`<div class="cv-section-head" style="color:${col};font-size:${Math.round(8.5*fScale)}px;">Zertifikate &amp; Kurse</div>`;
+      certs.forEach(c=>{const link=c.url?(c.url.startsWith('http')?c.url:'https://'+c.url):'';s+=`<div class="cv-entry" style="border-left-color:${colLight};"><div class="cv-entry-head"><span class="cv-entry-title" style="font-size:${Math.round(12.5*fScale)}px;">${link?`<a href="${link}" target="_blank" style="color:inherit;text-decoration:none;">`:''}${h(c.title)}${link?`</a>`:''}</span><span class="cv-entry-date" style="color:${colDark2};font-size:${Math.round(10*fScale)}px;">${h(c.date)}</span></div>${c.issuer?`<div class="cv-entry-sub" style="color:${colDark2};font-size:${Math.round(11*fScale)}px;">${h(c.issuer)}</div>`:''}</div>`;});
+      return s;
+    },
+    projekte:()=>{
+      const projs=state.projects.map(id=>({title:val('proj-title-'+id),url:val('proj-url-'+id),from:val('proj-from-'+id),to:val('proj-to-'+id),desc:val('proj-desc-'+id)})).filter(p=>p.title);
+      if(!projs.length) return '';
+      let s=`<div class="cv-section-head" style="color:${col};font-size:${Math.round(8.5*fScale)}px;">Projekte</div>`;
+      projs.forEach(p=>{const link=p.url?(p.url.startsWith('http')?p.url:'https://'+p.url):'';s+=`<div class="cv-entry" style="border-left-color:${colLight};"><div class="cv-entry-head"><span class="cv-entry-title" style="font-size:${Math.round(12.5*fScale)}px;">${link?`<a href="${link}" target="_blank" style="color:${col};text-decoration:none;">`:''}${h(p.title)}${link?`</a>`:''}</span><span class="cv-entry-date" style="color:${colDark2};font-size:${Math.round(10*fScale)}px;">${h(p.from)}${p.to?' – '+h(p.to):''}</span></div>${p.url?`<div style="font-size:${Math.round(10*fScale)}px;color:${col};margin-top:2px;"><a href="${link}" target="_blank" style="color:${col};">${h(p.url)}</a></div>`:''} ${p.desc?`<div class="cv-entry-desc" style="font-size:${Math.round(11*fScale)}px;line-height:${lineH};">${h(p.desc).replace(/\n/g,'<br>')}</div>`:''}</div>`;});
+      return s;
+    },
+  };
+
+  sectionOrder.forEach(key=>{const r=renderers[key];if(r) rightHTML+=r();});
+
+  const cvLeft=document.getElementById('cv-left');
+  cvLeft.style.backgroundColor=col; cvLeft.style.color='#fff'; cvLeft.innerHTML=leftHTML;
+  const cvRight=document.getElementById('cv-right');
+  cvRight.innerHTML=rightHTML; cvRight.style.backgroundColor=rightBg;
+  document.getElementById('cv-paper').style.fontFamily='"Source Sans 3",sans-serif';
+
+  // PAGE 2
+  const p2Title=val('p2-title'),p2Free=val('p2-freetext');
+  const p2Entries=state.page2Entries.map(id=>({title:val('p2e-title-'+id),sub:val('p2e-sub-'+id),desc:val('p2e-desc-'+id)})).filter(e=>e.title||e.desc);
+  const hasPage2=p2Title||p2Free||p2Entries.length>0;
+  const paper2=document.getElementById('cv-paper-2'); paper2.style.display=hasPage2?'table':'none';
+  if(hasPage2){
+    let left2=`<div style="display:flex;justify-content:center;margin-bottom:1.5rem;"><div style="width:48px;height:48px;border-radius:50%;background:${colLight};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;border:3px solid rgba(255,255,255,0.3);">${t('page2Circle')}</div></div><div style="text-align:center;font-weight:700;font-size:14px;margin-bottom:4px;">${h(name)}</div><div style="text-align:center;font-size:9px;opacity:0.6;margin-bottom:2rem;">${h(role)}</div><div style="font-size:8.5px;font-weight:700;opacity:0.55;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:5px;margin-bottom:12px;">${t('cvContact')}</div>${email?`<div style="margin-bottom:8px;"><span style="font-size:8.5px;font-weight:700;opacity:0.5;display:block;">${t('cvEmail')}</span><span style="font-size:11px;opacity:.85;">${h(email)}</span></div>`:''}${phone?`<div style="margin-bottom:8px;"><span style="font-size:8.5px;font-weight:700;opacity:0.5;display:block;">${t('cvPhone')}</span><span style="font-size:11px;opacity:.85;">${h(phone)}</span></div>`:''}${web?(()=>{const wh=web.startsWith('http')?web:'https://'+web;return`<div style="margin-bottom:8px;"><span style="font-size:8.5px;font-weight:700;opacity:0.5;display:block;">${t('cvWeb')}</span><a href="${wh}" target="_blank" style="font-size:11px;color:inherit;text-decoration:underline;font-weight:700;">${h(webLabel)}</a></div>`;})():''}`;
+    let right2=`<div style="font-size:${Math.round(22*fScale)}px;font-weight:700;color:#1e2e1d;margin-bottom:4px;font-family:${font};">${h(name)}</div><div style="font-size:${Math.round(11*fScale)}px;color:${colDark2};margin-bottom:12px;font-weight:500;">${h(role)}</div><div style="height:2px;margin-bottom:1.25rem;border-radius:1px;background:linear-gradient(90deg,${col} 0%,${colLight} 60%,transparent 100%);"></div>`;
+    if(p2Title) right2+=`<div class="cv-section-head" style="color:${col};">${h(p2Title)}</div>`;
+    p2Entries.forEach(e=>{right2+=`<div class="cv-entry" style="border-left-color:${colLight};margin-bottom:12px;"><div class="cv-entry-head"><span class="cv-entry-title">${h(e.title)}</span></div>${e.sub?`<div class="cv-entry-sub" style="color:${colDark2};">${h(e.sub)}</div>`:''} ${e.desc?`<div class="cv-entry-desc">${h(e.desc).replace(/\n/g,'<br>')}</div>`:''}</div>`;});
+    if(p2Free) right2+=`<div style="font-size:${Math.round(11*fScale)}px;color:#555;line-height:${lineH};margin-top:1rem;">${h(p2Free).replace(/\n/g,'<br>')}</div>`;
+    const l2=document.getElementById('cv-left-2'); l2.style.backgroundColor=col;l2.style.color='#fff';l2.innerHTML=left2;
+    document.getElementById('cv-right-2').innerHTML=right2; paper2.style.fontFamily='"Source Sans 3",sans-serif';
   }
-
-  const expEntries = state.exp.map(id=>({title:val('exp-title-'+id),company:val('exp-company-'+id),from:val('exp-from-'+id),to:val('exp-to-'+id),desc:val('exp-desc-'+id)})).filter(e=>e.title||e.company);
-  if (expEntries.length) {
-    rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvExperience')}</div>`;
-    expEntries.forEach(e => {
-      rightHTML += `<div class="cv-entry" style="border-left-color:${colLight};">
-        <div class="cv-entry-head"><span class="cv-entry-title">${h(e.title)}</span><span class="cv-entry-date" style="color:${colDark2};">${h(e.from)}${e.to?' – '+h(e.to):''}</span></div>
-        ${e.company?`<div class="cv-entry-sub" style="color:${colDark2};">${h(e.company)}</div>`:''}
-        ${e.desc?`<div class="cv-entry-desc">${h(e.desc).replace(/\n/g,'<br>')}</div>`:''}
-      </div>`;
-    });
-  }
-
-  const eduEntries = state.edu.map(id=>({degree:val('edu-degree-'+id),school:val('edu-school-'+id),from:val('edu-from-'+id),to:val('edu-to-'+id)})).filter(e=>e.degree||e.school);
-  if (eduEntries.length) {
-    rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvEducation')}</div>`;
-    eduEntries.forEach(e => {
-      rightHTML += `<div class="cv-entry" style="border-left-color:${colLight};">
-        <div class="cv-entry-head"><span class="cv-entry-title">${h(e.degree)}</span><span class="cv-entry-date" style="color:${colDark2};">${h(e.from)}${e.to?' – '+h(e.to):''}</span></div>
-        ${e.school?`<div class="cv-entry-sub" style="color:${colDark2};">${h(e.school)}</div>`:''}
-      </div>`;
-    });
-  }
-
-  // ── POSITIONS (links / rechts) ──
-  const kompsPos   = (document.getElementById('f-komps-pos')  ||{}).value || 'right';
-  const hobbiesPos = (document.getElementById('f-hobbies-pos')||{}).value || 'right';
-  const licensePos = (document.getElementById('f-license-pos')||{}).value || 'right';
-
-  // ── KOMPETENZEN ──
-  if (komps.trim()) {
-    if (kompsPos === 'right') {
-      rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvKomps')}</div><div class="cv-komps">`;
-      komps.split('\n').forEach(k => { if(k.trim()) rightHTML += `<div class="cv-komp" style="border-left-color:${colLight};">${h(k.trim())}</div>`; });
-      rightHTML += `</div>`;
-    } else {
-      leftHTML += `<div class="cv-l-section"><div class="cv-l-section-title">${t('cvKomps')}</div>`;
-      komps.split('\n').forEach(k => { if(k.trim()) leftHTML += `<span class="cv-tag">${h(k.trim())}</span>`; });
-      leftHTML += `</div>`;
-    }
-  }
-
-  // ── HOBBYS & INTERESSEN ──
-  if (hobbies) {
-    if (hobbiesPos === 'right') {
-      rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvInterests')}</div>`;
-      rightHTML += `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;">`;
-      hobbies.split(',').forEach(tag => {
-        if (tag.trim()) rightHTML += `<span style="background:${colLight}22;border:1px solid ${colLight};border-radius:5px;padding:3px 10px;font-size:${hobbiesSize}px;color:#444;font-weight:500;">${h(tag.trim())}</span>`;
-      });
-      rightHTML += `</div>`;
-    } else {
-      leftHTML += `<div class="cv-l-section"><div class="cv-l-section-title">${t('cvInterests')}</div>`;
-      hobbies.split(',').forEach(tag => {
-        if (tag.trim()) leftHTML += `<span class="cv-tag" style="font-size:${hobbiesSize}px;">${h(tag.trim())}</span>`;
-      });
-      leftHTML += `</div>`;
-    }
-  }
-
-  // ── ZUSÄTZLICHE QUALIFIKATIONEN — FÜHRERSCHEIN ──
-  if (activeLic.length) {
-    if (licensePos === 'right') {
-      rightHTML += `<div class="cv-section-head" style="color:${col};">${t('cvExtraQual') || 'Zusätzliche Qualifikationen'}</div>`;
-      rightHTML += `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
-        <span style="font-size:11px;font-weight:600;color:#444;white-space:nowrap;">${t('cvLicense') || 'Führerschein'}:</span>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;">
-          ${activeLic.map(c => `<span style="background:${col};color:#fff;border-radius:5px;padding:2px 9px;font-size:10.5px;font-weight:700;letter-spacing:0.04em;">${c}</span>`).join('')}
-        </div>
-      </div>`;
-      if (licNote) rightHTML += `<div style="font-size:11px;color:#666;margin-top:3px;font-style:italic;">${h(licNote)}</div>`;
-    } else {
-      leftHTML += `<div class="cv-l-section"><div class="cv-l-section-title">${t('cvExtraQual')}</div>`;
-      leftHTML += `<div style="display:flex;flex-wrap:wrap;gap:4px;">`;
-      activeLic.forEach(c => {
-        leftHTML += `<span style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:#fff;">${c}</span>`;
-      });
-      leftHTML += `</div>`;
-      if (licNote) leftHTML += `<div style="font-size:10px;opacity:0.65;margin-top:5px;">${h(licNote)}</div>`;
-      leftHTML += `</div>`;
-    }
-  }
-
-  const cvLeft = document.getElementById('cv-left');
-  cvLeft.style.backgroundColor = col;
-  cvLeft.style.color = '#fff';
-  cvLeft.innerHTML = leftHTML;
-  document.getElementById('cv-right').innerHTML = rightHTML;
-  document.getElementById('cv-paper').style.fontFamily = '"Source Sans 3", sans-serif';
-
-  // ── PAGE 2 ──
-  const p2Title   = val('p2-title');
-  const p2Free    = val('p2-freetext');
-  const p2Entries = state.page2Entries.map(id=>({title:val('p2e-title-'+id),sub:val('p2e-sub-'+id),desc:val('p2e-desc-'+id)})).filter(e=>e.title||e.desc);
-  const hasPage2  = p2Title||p2Free||p2Entries.length>0;
-  const paper2    = document.getElementById('cv-paper-2');
-  paper2.style.display = hasPage2 ? 'table' : 'none';
-
-  if (hasPage2) {
-    let left2 = `
-      <div style="display:flex;justify-content:center;margin-bottom:1.5rem;">
-        <div style="width:48px;height:48px;border-radius:50%;background-color:${colLight};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;border:3px solid rgba(255,255,255,0.3);">${t('page2Circle')}</div>
-      </div>
-      <div style="text-align:center;font-weight:700;font-size:14px;margin-bottom:4px;">${h(name)}</div>
-      <div style="text-align:center;font-size:9px;opacity:0.6;margin-bottom:2rem;">${h(role)}</div>
-      <div style="font-size:8.5px;font-weight:700;opacity:0.55;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:5px;margin-bottom:12px;">${t('cvContact')}</div>
-      ${email?`<div style="margin-bottom:8px;"><span style="font-size:8.5px;font-weight:700;opacity:0.5;display:block;">${t('cvEmail')}</span><span style="font-size:11px;opacity:.85;">${h(email)}</span></div>`:''}
-      ${phone?`<div style="margin-bottom:8px;"><span style="font-size:8.5px;font-weight:700;opacity:0.5;display:block;">${t('cvPhone')}</span><span style="font-size:11px;opacity:.85;">${h(phone)}</span></div>`:''}
-      ${web?(()=>{const wh=web.startsWith('http')?web:'https://'+web;return `<div style="margin-bottom:8px;"><span style="font-size:8.5px;font-weight:700;opacity:0.5;display:block;">${t('cvWeb')}</span><a href="${wh}" target="_blank" style="font-size:11px;color:inherit;text-decoration:underline;font-weight:700;">${h(webLabel)}</a></div>`;})():''}`;
-
-    let right2 = `
-      <div style="font-size:22px;font-weight:700;color:#1e2e1d;margin-bottom:4px;font-family:${font};">${h(name)}</div>
-      <div style="font-size:11px;color:${colDark2};margin-bottom:12px;font-weight:500;">${h(role)}</div>
-      <div style="height:2px;margin-bottom:1.25rem;border-radius:1px;background:linear-gradient(90deg,${col} 0%,${colLight} 60%,transparent 100%);"></div>`;
-    if (p2Title) right2 += `<div class="cv-section-head" style="color:${col};">${h(p2Title)}</div>`;
-    p2Entries.forEach(e => {
-      right2 += `<div class="cv-entry" style="border-left-color:${colLight};margin-bottom:12px;">
-        <div class="cv-entry-head"><span class="cv-entry-title">${h(e.title)}</span></div>
-        ${e.sub?`<div class="cv-entry-sub" style="color:${colDark2};">${h(e.sub)}</div>`:''}
-        ${e.desc?`<div class="cv-entry-desc">${h(e.desc).replace(/\n/g,'<br>')}</div>`:''}
-      </div>`;
-    });
-    if (p2Free) right2 += `<div style="font-size:11px;color:#555;line-height:1.75;margin-top:1rem;">${h(p2Free).replace(/\n/g,'<br>')}</div>`;
-
-    const l2 = document.getElementById('cv-left-2');
-    l2.style.backgroundColor = col; l2.style.color = '#fff'; l2.innerHTML = left2;
-    document.getElementById('cv-right-2').innerHTML = right2;
-    paper2.style.fontFamily = '"Source Sans 3", sans-serif';
-  }
+  updateProgress();
 }
 
-// ─────────────────────────────────────────────
-//  HELPERS
-// ─────────────────────────────────────────────
-function val(id)       { const el=document.getElementById(id); return el?el.value:''; }
-function h(s)          { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function esc(s)        { return String(s||'').replace(/"/g,'&quot;'); }
-function setVal(id, v) { const el=document.getElementById(id); if(el) el.value=v||''; }
+// ─── HELPERS ─────────────────────────────────────
+function val(id){const el=document.getElementById(id);return el?el.value:'';}
+function h(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){return String(s||'').replace(/"/g,'&quot;');}
+function setVal(id,v){const el=document.getElementById(id);if(el)el.value=v||'';}
+function lighten(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r+(255-r)*a)},${Math.round(g+(255-g)*a)},${Math.round(b+(255-b)*a)})`;}
+function colLight2(col){const r=parseInt(col.slice(1,3),16),g=parseInt(col.slice(3,5),16),b=parseInt(col.slice(5,7),16);return`rgb(${Math.min(255,Math.round(r*1.8))},${Math.min(255,Math.round(g*1.8))},${Math.min(255,Math.round(b*1.8))})`;}
 
-function lighten(hex, amount) {
-  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  return `rgb(${Math.round(r+(255-r)*amount)},${Math.round(g+(255-g)*amount)},${Math.round(b+(255-b)*amount)})`;
-}
-function colLight2(col) {
-  const r=parseInt(col.slice(1,3),16),g=parseInt(col.slice(3,5),16),b=parseInt(col.slice(5,7),16);
-  return `rgb(${Math.min(255,Math.round(r*1.8))},${Math.min(255,Math.round(g*1.8))},${Math.min(255,Math.round(b*1.8))})`;
-}
-
-// ─────────────────────────────────────────────
-//  ZOOM
-// ─────────────────────────────────────────────
-function changeZoom(delta) {
-  zoom = Math.min(1.4, Math.max(0.5, zoom+delta));
-  document.getElementById('cv-paper').style.transform = `scale(${zoom})`;
-  const p2=document.getElementById('cv-paper-2'); if(p2) p2.style.transform=`scale(${zoom})`;
-  document.getElementById('zoom-label').textContent = Math.round(zoom*100)+'%';
-  document.getElementById('preview-area').style.paddingBottom = zoom>1?`${(zoom-1)*1000+80}px`:'2rem';
+// ─── ZOOM ────────────────────────────────────────
+function changeZoom(delta){
+  zoom=Math.min(1.4,Math.max(0.5,zoom+delta));
+  document.getElementById('cv-paper').style.transform=`scale(${zoom})`;
+  const p2=document.getElementById('cv-paper-2');if(p2)p2.style.transform=`scale(${zoom})`;
+  document.getElementById('zoom-label').textContent=Math.round(zoom*100)+'%';
+  document.getElementById('preview-area').style.paddingBottom=zoom>1?`${(zoom-1)*1000+80}px`:'2rem';
 }
 
-// ─────────────────────────────────────────────
-//  SAVE / LOAD
-// ─────────────────────────────────────────────
-function saveData() {
-  const data = {
+// ─── COLLECT / APPLY ─────────────────────────────
+function collectData(){
+  return{
     name:val('f-name'),role:val('f-role'),email:val('f-email'),phone:val('f-phone'),
     address:val('f-address'),birth:val('f-birth'),web:val('f-web'),webLabel:val('f-web-label'),
     summary:val('f-summary'),goal:val('f-goal'),komps:val('f-komps'),hobbies:val('f-hobbies'),
-    kompsPos:val('f-komps-pos')||'right', hobbiesPos:val('f-hobbies-pos')||'right', licensePos:val('f-license-pos')||'right',
+    kompsPos:val('f-komps-pos')||'right',hobbiesPos:val('f-hobbies-pos')||'right',licensePos:val('f-license-pos')||'right',
     color:state.color,font:state.font,photoData:state.photoData,
-    license: ['AM','A1','A2','A','B','BE','C1','C1E','C','CE','D1','D','T','L'].filter(c=>{ const el=document.getElementById('lic-'+c); return el&&el.checked; }),
-    licenseNote: val('f-license-note'),
-    exp:   state.exp.map(id=>({id,title:val('exp-title-'+id),company:val('exp-company-'+id),from:val('exp-from-'+id),to:val('exp-to-'+id),desc:val('exp-desc-'+id)})),
-    edu:   state.edu.map(id=>({id,degree:val('edu-degree-'+id),school:val('edu-school-'+id),from:val('edu-from-'+id),to:val('edu-to-'+id)})),
+    fontScale:val('f-font-scale')||'100',lineHeight:val('f-line-height')||'1.75',rightBg:val('f-right-bg')||'#ffffff',
+    sectionOrder:[...sectionOrder],
+    license:['AM','A1','A2','A','B','BE','C1','C1E','C','CE','D1','D','T','L'].filter(c=>{const el=document.getElementById('lic-'+c);return el&&el.checked;}),
+    licenseNote:val('f-license-note'),
+    exp:state.exp.map(id=>({id,title:val('exp-title-'+id),company:val('exp-company-'+id),from:val('exp-from-'+id),to:val('exp-to-'+id),desc:val('exp-desc-'+id)})),
+    edu:state.edu.map(id=>({id,degree:val('edu-degree-'+id),school:val('edu-school-'+id),from:val('edu-from-'+id),to:val('edu-to-'+id)})),
     skills:state.skills.map(id=>({id,name:val('sk-name-'+id),pct:val('sk-pct-'+id)})),
-    langs: state.langs.map(id=>({id,name:val('ln-name-'+id),lvl:val('ln-lvl-'+id)})),
+    langs:state.langs.map(id=>({id,name:val('ln-name-'+id),lvl:val('ln-lvl-'+id)})),
+    extraquals:state.extraquals.map(id=>({id,title:val('eq-title-'+id),detail:val('eq-detail-'+id)})),
+    refs:state.refs.map(id=>({id,name:val('ref-name-'+id),pos:val('ref-pos-'+id),company:val('ref-company-'+id),email:val('ref-email-'+id),phone:val('ref-phone-'+id),note:val('ref-note-'+id)})),
+    certs:state.certs.map(id=>({id,title:val('cert-title-'+id),issuer:val('cert-issuer-'+id),date:val('cert-date-'+id),url:val('cert-url-'+id)})),
+    projects:state.projects.map(id=>({id,title:val('proj-title-'+id),url:val('proj-url-'+id),from:val('proj-from-'+id),to:val('proj-to-'+id),desc:val('proj-desc-'+id)})),
+    p2title:val('p2-title'),p2free:val('p2-freetext'),
+    p2entries:state.page2Entries.map(id=>({id,title:val('p2e-title-'+id),sub:val('p2e-sub-'+id),desc:val('p2e-desc-'+id)})),
+    photoShape:val('f-photo-shape'),photoSize:val('f-photo-size')||'120',borderSize:val('f-border-size')||'4',borderColor:val('f-border-color'),
   };
-  localStorage.setItem('cvbuilder_data', JSON.stringify(data));
-  showToast(t('toastSaved'));
 }
 
-function loadSaved() {
-  const raw = localStorage.getItem('cvbuilder_data');
-  if (!raw) return loadDefaults();
-  try {
-    const d = JSON.parse(raw);
-    setVal('f-name',d.name); setVal('f-role',d.role); setVal('f-email',d.email); setVal('f-phone',d.phone);
-    setVal('f-address',d.address); setVal('f-birth',d.birth); setVal('f-web',d.web); setVal('f-web-label',d.webLabel||'Website');
-    setVal('f-summary',d.summary); setVal('f-goal',d.goal); setVal('f-komps',d.komps); setVal('f-hobbies',d.hobbies);
-    if (d.color) state.color=d.color;
-    if (d.font)  state.font=d.font;
-    if (d.license && Array.isArray(d.license)) {
-      d.license.forEach(c => { const el=document.getElementById('lic-'+c); if(el) el.checked=true; });
-    }
-    if (d.licenseNote) setVal('f-license-note', d.licenseNote);
-    if (d.kompsPos)   setVal('f-komps-pos',   d.kompsPos);
-    if (d.hobbiesPos) setVal('f-hobbies-pos', d.hobbiesPos);
-    if (d.licensePos) setVal('f-license-pos', d.licensePos);
-    if (d.photoData) {
-      state.photoData=d.photoData;
-      document.getElementById('photo-preview-img').src=d.photoData;
-      document.getElementById('photo-preview-name').textContent=t('photoShown');
-      document.getElementById('photo-drop-zone').style.display='none';
-      document.getElementById('photo-preview-section').style.display='block';
-    }
-    state.savedExp=d.exp||[]; state.savedEdu=d.edu||[]; state.savedSkills=d.skills||[]; state.savedLangs=d.langs||[];
-  } catch(e) { loadDefaults(); }
+function applyData(d){
+  ['exp-list','edu-list','skill-list','lang-list','extraqual-list','ref-list','cert-list','proj-list','p2-entries-list'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  state.exp=[];state.edu=[];state.skills=[];state.langs=[];state.extraquals=[];state.refs=[];state.certs=[];state.projects=[];state.page2Entries=[];
+  setVal('f-name',d.name);setVal('f-role',d.role);setVal('f-email',d.email);setVal('f-phone',d.phone);
+  setVal('f-address',d.address);setVal('f-birth',d.birth);setVal('f-web',d.web);setVal('f-web-label',d.webLabel||'Website');
+  setVal('f-summary',d.summary);setVal('f-goal',d.goal);setVal('f-komps',d.komps);setVal('f-hobbies',d.hobbies);
+  setVal('f-komps-pos',d.kompsPos||'right');setVal('f-hobbies-pos',d.hobbiesPos||'right');setVal('f-license-pos',d.licensePos||'right');
+  setVal('f-license-note',d.licenseNote);setVal('f-right-bg',d.rightBg||'#ffffff');
+  setVal('p2-title',d.p2title);setVal('p2-freetext',d.p2free);
+  if(d.fontScale){setVal('f-font-scale',d.fontScale);const lb=document.getElementById('font-scale-label');if(lb)lb.textContent=d.fontScale+'%';}
+  if(d.lineHeight){setVal('f-line-height',d.lineHeight);const lb=document.getElementById('line-height-label');if(lb)lb.textContent=d.lineHeight;}
+  if(d.photoShape)setVal('f-photo-shape',d.photoShape);
+  if(d.photoSize){const el=document.getElementById('f-photo-size');if(el){el.value=d.photoSize;const lb=document.getElementById('photo-size-label');if(lb)lb.textContent=d.photoSize+'px';}}
+  if(d.borderSize){const el=document.getElementById('f-border-size');if(el){el.value=d.borderSize;const lb=document.getElementById('border-size-label');if(lb)lb.textContent=d.borderSize+'px';}}
+  if(d.borderColor)setVal('f-border-color',d.borderColor);
+  if(d.color){state.color=d.color;}if(d.font){state.font=d.font;}
+  if(d.sectionOrder&&Array.isArray(d.sectionOrder)){sectionOrder=d.sectionOrder.filter(k=>SECTION_LABELS[k]);Object.keys(SECTION_LABELS).forEach(k=>{if(!sectionOrder.includes(k))sectionOrder.push(k);});buildSectionOrderUI();}
+  if(d.license&&Array.isArray(d.license)){['AM','A1','A2','A','B','BE','C1','C1E','C','CE','D1','D','T','L'].forEach(c=>{const el=document.getElementById('lic-'+c);if(el)el.checked=false;});d.license.forEach(c=>{const el=document.getElementById('lic-'+c);if(el)el.checked=true;});}
+  if(d.photoData){state.photoData=d.photoData;document.getElementById('photo-preview-img').src=d.photoData;document.getElementById('photo-preview-name').textContent=t('photoShown');document.getElementById('photo-drop-zone').style.display='none';document.getElementById('photo-preview-section').style.display='block';}
+  (d.exp||[]).forEach(e=>addEntry('exp',e));(d.edu||[]).forEach(e=>addEntry('edu',e));
+  (d.skills||[]).forEach(s=>addSkill(s));(d.langs||[]).forEach(l=>addLang(l));
+  (d.extraquals||[]).forEach(e=>addExtraQual(e));(d.refs||[]).forEach(r=>addRef(r));
+  (d.certs||[]).forEach(c=>addCert(c));(d.projects||[]).forEach(p=>addProject(p));
+  (d.p2entries||[]).forEach(e=>addPage2Entry(e));
+  buildColorPicker();buildFontPicker();updateCharCount();render();
 }
 
-function buildDynamicLists() {
-  (state.savedExp||[]).forEach(e=>addEntry('exp',e));
-  (state.savedEdu||[]).forEach(e=>addEntry('edu',e));
-  (state.savedSkills||[{name:'HTML & CSS',pct:'40'},{name:'Python',pct:'30'},{name:'Problemlösung',pct:'80'}]).forEach(s=>addSkill(s));
-  (state.savedLangs ||[{name:'العربية / Arabisch / Arabic',lvl:'Muttersprache'},{name:'Deutsch / German',lvl:'Fortgeschritten'},{name:'Englisch / English',lvl:'Fortgeschritten'}]).forEach(l=>addLang(l));
+// ─── SAVE / LOAD ─────────────────────────────────
+function saveData(silent=false){
+  localStorage.setItem('cvbuilder_data',JSON.stringify(collectData()));
+  if(!silent)showToast(t('toastSaved'));
 }
-
-function loadDefaults() {
-  ['f-name','f-role','f-email','f-phone','f-address','f-birth','f-summary','f-goal','f-komps','f-hobbies','f-web'].forEach(id=>setVal(id,''));
-  setVal('f-web-label','Website');
+function loadSaved(){
+  const raw=localStorage.getItem('cvbuilder_data'); if(!raw) return;
+  try{state._pendingLoad=JSON.parse(raw);}catch{}
 }
-
-function resetAll() {
-  if (!confirm(t('toastResetConfirm'))) return;
-  localStorage.removeItem('cvbuilder_data');
-  location.reload();
-}
-
-// ─────────────────────────────────────────────
-//  PDF EXPORT
-// ─────────────────────────────────────────────
-function exportPDF() { window.print(); }
-
-function downloadPDF() {
-  const name     = val('f-name') || 'CV';
-  const filename = name.replace(/\s+/g,'_') + '_CV.pdf';
-  showToast(t('toastPDFBuilding'));
-
-  const pages = [{
-    paperId:'cv-paper',   leftId:'cv-left',
-    paper:document.getElementById('cv-paper'),
-    left: document.getElementById('cv-left'),
-    right:document.getElementById('cv-right'),
-  }];
-  const p2el = document.getElementById('cv-paper-2');
-  if (p2el && p2el.style.display!=='none') pages.push({
-    paperId:'cv-paper-2', leftId:'cv-left-2',
-    paper:p2el,
-    left: document.getElementById('cv-left-2'),
-    right:document.getElementById('cv-right-2'),
-  });
-
-  // Reset zoom to scale(1) for accurate pixel measurements
-  const savedT = pages.map(p => {
-    const saved = p.paper.style.transform;
-    p.paper.style.transform = 'scale(1)';
-    p.paper.style.transformOrigin = 'top center';
-    return saved;
-  });
-
-  // Helper: get element offset relative to an ancestor (scroll-safe)
-  function offsetRelativeTo(el, ancestor) {
-    let x = 0, y = 0, cur = el;
-    while (cur && cur !== ancestor) { x += cur.offsetLeft; y += cur.offsetTop; cur = cur.offsetParent; }
-    return { x, y, w: el.offsetWidth, h: el.offsetHeight };
+function buildDynamicLists(){
+  const d=state._pendingLoad;
+  if(!d){
+    [{name:'HTML & CSS',pct:'40'},{name:'Python',pct:'30'},{name:'Problemlösung',pct:'80'}].forEach(s=>addSkill(s));
+    [{name:'العربية / Arabisch / Arabic',lvl:'Muttersprache'},{name:'Deutsch / German',lvl:'Fortgeschritten'},{name:'Englisch / English',lvl:'Fortgeschritten'}].forEach(l=>addLang(l));
+    return;
   }
+  applyData(d);
+}
+function loadDefaults(){['f-name','f-role','f-email','f-phone','f-address','f-birth','f-summary','f-goal','f-komps','f-hobbies','f-web'].forEach(id=>setVal(id,''));setVal('f-web-label','Website');}
+function resetAll(){if(!confirm(t('toastResetConfirm'))) return;localStorage.removeItem('cvbuilder_data');location.reload();}
 
-  // Two frames so browser fully repaints at scale(1) before we measure
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const heights = pages.map(p =>
-      Math.max(p.paper.offsetHeight, p.left.scrollHeight, p.right.scrollHeight, 1050)
-    );
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-    const pW = 210, pH = 297;
-
-    const next = i => {
-      if (i >= pages.length) {
-        pages.forEach((p,idx) => { p.paper.style.transform = savedT[idx]; });
-        pdf.save(filename);
-        showToast(t('toastPDFDone'));
-        return;
-      }
-      const pg = pages[i], fullH = heights[i], col = state.color;
-      const paperPxW = pg.paper.offsetWidth || 720;
-
-      // Collect links BEFORE capture (at scale 1, scroll-independent)
-      const rawLinks = [];
-      pg.paper.querySelectorAll('a[href]').forEach(link => {
-        const href = link.getAttribute('href');
-        if (!href || href === '#') return;
-        const pos = offsetRelativeTo(link, pg.paper);
-        rawLinks.push({ url:href, xPx:pos.x, yPx:pos.y,
-          wPx:Math.max(pos.w, 60), hPx:Math.max(pos.h, 14) });
-      });
-
-      html2canvas(pg.paper, {
-        scale: 4,            // ← 4× for crystal-clear PDF output
-        useCORS: true, allowTaint: true,
-        backgroundColor: '#ffffff', logging: false,
-        onclone: doc => {
-          const cP = doc.getElementById(pg.paperId);
-          const cL = doc.getElementById(pg.leftId);
-          if (cP) { cP.style.display='table'; cP.style.minHeight=fullH+'px'; cP.style.height=fullH+'px'; }
-          if (cL) { cL.style.display='table-cell'; cL.style.height=fullH+'px'; cL.style.minHeight=fullH+'px'; cL.style.backgroundColor=col; cL.style.background=col; }
-        },
-      }).then(canvas => {
-        if (i > 0) pdf.addPage();
-        const firstPage = pdf.getNumberOfPages();
-        const imgH = (canvas.height * pW) / canvas.width;
-
-        // Insert image across as many PDF pages as needed
-        let posY = 0, rem = imgH, isFirst = true;
-        while (rem > 0) {
-          if (!isFirst) pdf.addPage();
-          pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, -posY, pW, imgH);
-          posY += pH; rem -= pH; isFirst = false;
-        }
-
-        // Overlay invisible clickable link annotations
-        const mmPerPxX = pW   / paperPxW;
-        const mmPerPxY = imgH / fullH;
-        rawLinks.forEach(({ url, xPx, yPx, wPx, hPx }) => {
-          const xMM = xPx * mmPerPxX;
-          const yMM = yPx * mmPerPxY;
-          const wMM = wPx * mmPerPxX;
-          const hMM = hPx * mmPerPxY;
-          const pageIdx   = Math.floor(yMM / pH);
-          const yOnPage   = yMM - pageIdx * pH;
-          const targetPg  = firstPage + pageIdx;
-          if (targetPg <= pdf.getNumberOfPages()) {
-            pdf.setPage(targetPg);
-            pdf.link(xMM, yOnPage, wMM, hMM, { url });
-          }
-        });
-        pdf.setPage(pdf.getNumberOfPages());
-        next(i + 1);
-      }).catch(err => {
-        console.error(err);
-        showToast(t('toastPDFError'));
-        pages.forEach((p,idx) => { p.paper.style.transform = savedT[idx]; });
-      });
+// ─── PDF EXPORT ──────────────────────────────────
+function exportPDF(){window.print();}
+function downloadPDF(){
+  const name=val('f-name')||'CV';
+  const filename=name.replace(/\s+/g,'_')+'_Lebenslauf.pdf';
+  showToast(t('toastPDFBuilding'));
+  const pages=[{paperId:'cv-paper',leftId:'cv-left',paper:document.getElementById('cv-paper'),left:document.getElementById('cv-left'),right:document.getElementById('cv-right')}];
+  const p2el=document.getElementById('cv-paper-2');
+  if(p2el&&p2el.style.display!=='none')pages.push({paperId:'cv-paper-2',leftId:'cv-left-2',paper:p2el,left:document.getElementById('cv-left-2'),right:document.getElementById('cv-right-2')});
+  const savedT=pages.map(p=>{const s=p.paper.style.transform;p.paper.style.transform='scale(1)';return s;});
+  function offRel(el,anc){let x=0,y=0,cur=el;while(cur&&cur!==anc){x+=cur.offsetLeft;y+=cur.offsetTop;cur=cur.offsetParent;}return{x,y,w:el.offsetWidth,h:el.offsetHeight};}
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const heights=pages.map(p=>Math.max(p.paper.offsetHeight,p.left.scrollHeight,p.right.scrollHeight,1050));
+    const{jsPDF}=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pW=210,pH=297;
+    const next=i=>{
+      if(i>=pages.length){pages.forEach((p,idx)=>{p.paper.style.transform=savedT[idx];});pdf.save(filename);showToast(t('toastPDFDone'));return;}
+      const pg=pages[i],fullH=heights[i],col=state.color,paperPxW=pg.paper.offsetWidth||720;
+      const rawLinks=[];
+      pg.paper.querySelectorAll('a[href]').forEach(link=>{const href=link.getAttribute('href');if(!href||href==='#')return;const pos=offRel(link,pg.paper);rawLinks.push({url:href,xPx:pos.x,yPx:pos.y,wPx:Math.max(pos.w,60),hPx:Math.max(pos.h,14)});});
+      html2canvas(pg.paper,{scale:4,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false,
+        onclone:doc=>{const cP=doc.getElementById(pg.paperId);const cL=doc.getElementById(pg.leftId);if(cP){cP.style.display='table';cP.style.minHeight=fullH+'px';cP.style.height=fullH+'px';}if(cL){cL.style.display='table-cell';cL.style.height=fullH+'px';cL.style.minHeight=fullH+'px';cL.style.backgroundColor=col;cL.style.background=col;}}
+      }).then(canvas=>{
+        if(i>0)pdf.addPage();
+        const firstPage=pdf.getNumberOfPages(),imgH=(canvas.height*pW)/canvas.width;
+        let posY=0,rem=imgH,isFirst=true;
+        while(rem>0){if(!isFirst)pdf.addPage();pdf.addImage(canvas.toDataURL('image/jpeg',0.98),'JPEG',0,-posY,pW,imgH);posY+=pH;rem-=pH;isFirst=false;}
+        const mmX=pW/paperPxW,mmY=imgH/fullH;
+        rawLinks.forEach(({url,xPx,yPx,wPx,hPx})=>{const xM=xPx*mmX,yM=yPx*mmY,wM=wPx*mmX,hM=hPx*mmY,pgIdx=Math.floor(yM/pH),yOp=yM-pgIdx*pH,tPg=firstPage+pgIdx;if(tPg<=pdf.getNumberOfPages()){pdf.setPage(tPg);pdf.link(xM,yOp,wM,hM,{url});}});
+        pdf.setPage(pdf.getNumberOfPages());next(i+1);
+      }).catch(err=>{console.error(err);showToast(t('toastPDFError'));pages.forEach((p,idx)=>{p.paper.style.transform=savedT[idx];});});
     };
     next(0);
   }));
 }
 
-// ─────────────────────────────────────────────
-//  TOAST
-// ─────────────────────────────────────────────
-function showToast(msg) {
+// ─── TOAST ───────────────────────────────────────
+function showToast(msg){
   let el=document.getElementById('toast');
-  if (!el) { el=document.createElement('div'); el.id='toast'; Object.assign(el.style,{position:'fixed',bottom:'1.5rem',right:'1.5rem',background:'#2d3d2c',color:'#fff',padding:'10px 20px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',zIndex:'9999',transition:'opacity 0.3s'}); document.body.appendChild(el); }
-  el.textContent=msg; el.style.opacity='1';
-  clearTimeout(el._to); el._to=setTimeout(()=>el.style.opacity='0',2400);
+  if(!el){el=document.createElement('div');el.id='toast';Object.assign(el.style,{position:'fixed',bottom:'1.5rem',right:'1.5rem',background:'#2d3d2c',color:'#fff',padding:'10px 20px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',zIndex:'9999',transition:'opacity 0.3s'});document.body.appendChild(el);}
+  el.textContent=msg;el.style.opacity='1';clearTimeout(el._to);el._to=setTimeout(()=>el.style.opacity='0',2400);
 }
 
-// ─────────────────────────────────────────────
-//  PHOTO
-// ─────────────────────────────────────────────
-function handlePhotoUpload(e) { const f=e.target.files[0]; if(f) readPhoto(f); }
-function handleDrop(e) {
-  e.preventDefault(); document.getElementById('photo-drop-zone').style.borderColor='';
-  const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) readPhoto(f);
-}
-function readPhoto(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      // ── Process at high resolution for maximum sharpness ──
-      // We store a 600×600 pre-cropped version so the CV photo
-      // always looks crisp regardless of the original file size.
-      const SIZE = 600;
-      const canvas = document.createElement('canvas');
-      canvas.width  = SIZE;
-      canvas.height = SIZE;
-      const ctx = canvas.getContext('2d');
-
-      // Enable best-quality downsampling
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-
-      // Smart crop: fit the largest square centred horizontally,
-      // biased toward the top third of the image (where faces usually are).
-      const scale = Math.max(SIZE / img.width, SIZE / img.height);
-      const cropW = SIZE / scale;
-      const cropH = SIZE / scale;
-      const cropX = (img.width  - cropW) / 2;             // centre X
-      const cropY = Math.max(0, (img.height - cropH) * 0.25); // bias to top
-
-      ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, SIZE, SIZE);
-
-      // Save as high-quality JPEG (0.95 = very sharp, reasonable file size)
-      state.photoData = canvas.toDataURL('image/jpeg', 0.95);
-
-      document.getElementById('photo-preview-img').src          = state.photoData;
-      document.getElementById('photo-preview-name').textContent  = file.name;
-      document.getElementById('photo-drop-zone').style.display    = 'none';
-      document.getElementById('photo-preview-section').style.display = 'block';
-      render();
-      showToast(t('toastPhotoUploaded'));
+// ─── PHOTO ───────────────────────────────────────
+function handlePhotoUpload(e){const f=e.target.files[0];if(f)readPhoto(f);}
+function handleDrop(e){e.preventDefault();document.getElementById('photo-drop-zone').style.borderColor='';const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))readPhoto(f);}
+function readPhoto(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const SIZE=600,canvas=document.createElement('canvas');canvas.width=SIZE;canvas.height=SIZE;
+      const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+      const scale=Math.max(SIZE/img.width,SIZE/img.height),cropW=SIZE/scale,cropH=SIZE/scale;
+      const cropX=(img.width-cropW)/2,cropY=Math.max(0,(img.height-cropH)*0.25);
+      ctx.drawImage(img,cropX,cropY,cropW,cropH,0,0,SIZE,SIZE);
+      state.photoData=canvas.toDataURL('image/jpeg',0.95);
+      document.getElementById('photo-preview-img').src=state.photoData;
+      document.getElementById('photo-preview-name').textContent=file.name;
+      document.getElementById('photo-drop-zone').style.display='none';
+      document.getElementById('photo-preview-section').style.display='block';
+      render();updateProgress();showToast(t('toastPhotoUploaded'));
     };
-    img.src = e.target.result;
+    img.src=e.target.result;
   };
   reader.readAsDataURL(file);
 }
-function removePhoto() {
-  state.photoData=''; document.getElementById('photo-input').value=''; document.getElementById('photo-preview-img').src='';
-  document.getElementById('photo-drop-zone').style.display='block'; document.getElementById('photo-preview-section').style.display='none';
-  render();
-}
+function removePhoto(){state.photoData='';document.getElementById('photo-input').value='';document.getElementById('photo-preview-img').src='';document.getElementById('photo-drop-zone').style.display='block';document.getElementById('photo-preview-section').style.display='none';render();updateProgress();}
 
-// ─────────────────────────────────────────────
-//  START
-// ─────────────────────────────────────────────
+// ─── START ───────────────────────────────────────
 init();
