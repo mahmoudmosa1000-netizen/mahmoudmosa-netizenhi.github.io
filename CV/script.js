@@ -188,19 +188,341 @@ function startAutoSave(){
 }
 
 // ─── QR CODE ────────────────────────────────────
-function generateQR(){
-  const url=val('f-web')||val('f-email')||'https://beispiel.de';
-  const target=document.getElementById('qr-output'); if(!target) return;
-  target.innerHTML='';
-  try{
-    const qr=qrcode(0,'M'); qr.addData(url.startsWith('http')?url:'https://'+url); qr.make();
-    target.innerHTML=qr.createImgTag(4,8);
-    const img=target.querySelector('img'); if(img){img.style.borderRadius='8px';img.style.display='block';img.style.margin='0 auto';}
-    const lbl=document.getElementById('qr-url-label'); if(lbl) lbl.textContent=url;
-  }catch(e){target.textContent='QR konnte nicht erstellt werden.';}
+let _qrDataUrl = '';
+let _qrFrame   = 'none';
+
+function selectQRFrame(el, frame) {
+  document.querySelectorAll('.qr-frame-opt').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  _qrFrame = frame;
+  const bw = document.getElementById('qr-border-wrap');
+  if (bw) bw.style.display = (frame === 'none') ? 'none' : 'block';
+  if (_qrDataUrl) buildQRCanvas(getQRUrl());
 }
 
-// ─── LINKEDIN / JSON RESUME IMPORT ──────────────
+function getQRUrl() {
+  const mode = (document.getElementById('qr-content')||{}).value || 'web';
+  if (mode === 'custom') return val('qr-custom-text') || '';
+  if (mode === 'email')  { const e = val('f-email'); return e ? 'mailto:'+e : ''; }
+  const w = val('f-web'); return w ? (w.startsWith('http') ? w : 'https://'+w) : '';
+}
+
+function generateQR() {
+  // Toggle sub-panel visibility
+  const chk  = document.getElementById('qr-in-cv');
+  const opts  = document.getElementById('qr-cv-options');
+  if (chk && opts) opts.style.display = chk.checked ? 'block' : 'none';
+
+  const mode = (document.getElementById('qr-content')||{}).value || 'web';
+  const cw   = document.getElementById('qr-custom-wrap');
+  if (cw) cw.style.display = mode === 'custom' ? 'block' : 'none';
+
+  const lpos = (document.getElementById('qr-label-pos')||{}).value || 'none';
+  const capW = document.getElementById('qr-caption-wrap');
+  if (capW) capW.style.display = lpos === 'none' ? 'none' : 'block';
+
+  const url = getQRUrl();
+  if (!url) {
+    if (chk && chk.checked) showToast('⚠ Bitte Website oder E-Mail eingeben.');
+    return;
+  }
+  buildQRCanvas(url);
+}
+
+function buildQRCanvas(url) {
+  const target = document.getElementById('qr-output');
+  const label  = document.getElementById('qr-url-label');
+  if (!target) return;
+  target.innerHTML = ''; _qrDataUrl = '';
+
+  if (typeof QRCode === 'undefined') {
+    target.innerHTML = '<div style="padding:16px;color:#c0392b;font-size:12px;text-align:center;">QR-Bibliothek nicht geladen.</div>';
+    return;
+  }
+
+  const eclMap = { L: QRCode.CorrectLevel.L, M: QRCode.CorrectLevel.M, Q: QRCode.CorrectLevel.Q, H: QRCode.CorrectLevel.H };
+  const ecl    = eclMap[(document.getElementById('qr-ecl')||{}).value || 'M'] || QRCode.CorrectLevel.M;
+  const darkC  = (document.getElementById('qr-dark-color') ||{}).value || state.color || '#2d3d2c';
+  const lightC = (document.getElementById('qr-light-color')||{}).value || '#ffffff';
+  const isTransparent = lightC === 'transparent';
+
+  const RENDER = 480; // high-res base
+  const tmp = document.createElement('div'); tmp.style.display = 'none'; document.body.appendChild(tmp);
+
+  new QRCode(tmp, {
+    text: url, width: RENDER, height: RENDER,
+    colorDark:  darkC,
+    colorLight: isTransparent ? '#ffffff' : lightC,
+    correctLevel: ecl,
+  });
+
+  setTimeout(() => {
+    const srcCanvas = tmp.querySelector('canvas');
+    if (!srcCanvas) { tmp.remove(); return; }
+
+    const border  = parseInt((document.getElementById('qr-border-size')||{}).value || '2');
+    const pad     = _qrFrame === 'none' ? 0 : border * 6 + 12;
+    const total   = RENDER + pad * 2;
+    const fc      = document.createElement('canvas');
+    fc.width = fc.height = total;
+    const ctx = fc.getContext('2d');
+
+    // ── Background ──
+    ctx.clearRect(0, 0, total, total);
+    if (!isTransparent) {
+      if (_qrFrame === 'badge') {
+        ctx.fillStyle = '#f5f5f5';
+        drawRR(ctx, 0, 0, total, total, 22); ctx.fill();
+      } else if (_qrFrame === 'colored') {
+        ctx.fillStyle = darkC;
+        drawRR(ctx, 0, 0, total, total, 22); ctx.fill();
+      } else {
+        ctx.fillStyle = lightC;
+        ctx.fillRect(0, 0, total, total);
+      }
+    }
+
+    // ── QR image ──
+    ctx.drawImage(srcCanvas, pad, pad, RENDER, RENDER);
+
+    // ── Transparent: erase light pixels ──
+    if (isTransparent) {
+      const imgData = ctx.getImageData(0, 0, total, total);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i] > 200 && d[i+1] > 200 && d[i+2] > 200) d[i+3] = 0;
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    // ── Frame border ──
+    if (_qrFrame !== 'none') {
+      const bw = border * 2.5;
+      const br = { simple: 0, rounded: 16, shadow: 6, badge: 22, colored: 22 }[_qrFrame] || 8;
+      ctx.strokeStyle = _qrFrame === 'colored' ? 'rgba(255,255,255,0.35)' : darkC;
+      ctx.lineWidth = bw;
+      drawRR(ctx, bw/2, bw/2, total-bw, total-bw, br); ctx.stroke();
+
+      if (_qrFrame === 'shadow') {
+        const sc = fc2 = document.createElement('canvas');
+        sc.width = total + 16; sc.height = total + 16;
+        const sc2 = sc.getContext('2d');
+        sc2.shadowColor = 'rgba(0,0,0,0.22)'; sc2.shadowBlur = 14;
+        sc2.shadowOffsetX = 5; sc2.shadowOffsetY = 5;
+        sc2.drawImage(fc, 0, 0);
+        const fc3 = document.createElement('canvas');
+        fc3.width = sc.width; fc3.height = sc.height;
+        fc3.getContext('2d').drawImage(sc, 0, 0);
+        _qrDataUrl = fc3.toDataURL('image/png');
+        target.innerHTML = `<img src="${_qrDataUrl}" style="max-width:160px;display:block;margin:0 auto;image-rendering:crisp-edges;">`;
+        if (label) label.textContent = url;
+        tmp.remove(); render(); return;
+      }
+    }
+
+    _qrDataUrl = fc.toDataURL('image/png');
+    target.innerHTML = `<img src="${_qrDataUrl}" style="max-width:160px;display:block;margin:0 auto;image-rendering:crisp-edges;">`;
+    if (label) label.textContent = url;
+    tmp.remove();
+    render();
+  }, 150);
+}
+
+function drawRR(ctx, x, y, w, h, r) {
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+  ctx.closePath();
+}
+
+function downloadQR() {
+  if (!_qrDataUrl) {
+    generateQR();
+    setTimeout(() => {
+      if (_qrDataUrl) downloadQR();
+      else showToast('⚠ QR-Code konnte nicht erstellt werden.');
+    }, 500);
+    return;
+  }
+  const a = document.createElement('a');
+  a.href     = _qrDataUrl;
+  a.download = (val('f-name')||'CV').replace(/\s+/g,'_') + '_QRCode.png';
+  a.click();
+  showToast('✓ QR-Code heruntergeladen!');
+}
+
+// ─── QR SNAP ─────────────────────────────────────
+function snapQR(x, y) {
+  const ex = document.getElementById('qr-x'), ey = document.getElementById('qr-y');
+  if (ex) { ex.value = x; document.getElementById('qr-x-label').textContent = x + '%'; }
+  if (ey) { ey.value = y; document.getElementById('qr-y-label').textContent = y + '%'; }
+  render();
+}
+
+// ─── QR DRAG & DROP ON CV PAPER ──────────────────
+function initQRDrag(el) {
+  const paper = document.getElementById('cv-paper');
+  let startX, startY, startL, startT;
+
+  el.addEventListener('mousedown', e => {
+    e.preventDefault();
+    const rect = paper.getBoundingClientRect();
+    startX = e.clientX; startY = e.clientY;
+    startL = (parseFloat(el.style.left) / 100) * paper.offsetWidth;
+    startT = (parseFloat(el.style.top)  / 100) * paper.offsetHeight;
+    el.style.transition = 'none';
+
+    const onMove = e => {
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      const newL = startL + dx, newT = startT + dy;
+      const pctX = (newL / paper.offsetWidth)  * 100;
+      const pctY = (newT / paper.offsetHeight) * 100;
+      el.style.left = pctX + '%';
+      el.style.top  = pctY + '%';
+
+      // Sync sliders
+      const ex = document.getElementById('qr-x'), ey = document.getElementById('qr-y');
+      if (ex) { ex.value = Math.round(pctX); document.getElementById('qr-x-label').textContent = Math.round(pctX) + '%'; }
+      if (ey) { ey.value = Math.round(pctY); document.getElementById('qr-y-label').textContent = Math.round(pctY) + '%'; }
+    };
+
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      el.style.transition = '';
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // Touch support
+  el.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+    startL = (parseFloat(el.style.left) / 100) * paper.offsetWidth;
+    startT = (parseFloat(el.style.top)  / 100) * paper.offsetHeight;
+
+    const onMove = e => {
+      const t = e.touches[0];
+      const newL = startL + (t.clientX - startX);
+      const newT = startT + (t.clientY - startY);
+      const pctX = (newL / paper.offsetWidth)  * 100;
+      const pctY = (newT / paper.offsetHeight) * 100;
+      el.style.left = pctX + '%';
+      el.style.top  = pctY + '%';
+      const ex = document.getElementById('qr-x'), ey = document.getElementById('qr-y');
+      if (ex) { ex.value = Math.round(pctX); document.getElementById('qr-x-label').textContent = Math.round(pctX) + '%'; }
+      if (ey) { ey.value = Math.round(pctY); document.getElementById('qr-y-label').textContent = Math.round(pctY) + '%'; }
+    };
+    const onEnd = () => { el.removeEventListener('touchmove', onMove); el.removeEventListener('touchend', onEnd); };
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd);
+  }, { passive: false });
+}
+
+// ─── JSON EXPORT ─────────────────────────────────
+function exportJSON() {
+  const d = collectData();
+  // Build JSON Resume standard format
+  const jsonResume = {
+    $schema: 'https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json',
+    basics: {
+      name:    d.name,
+      label:   d.role,
+      email:   d.email,
+      phone:   d.phone,
+      url:     d.web,
+      summary: d.summary,
+      location: { address: d.address },
+      profiles: d.web ? [{ network:'Website', url: d.web, username: d.webLabel }] : [],
+    },
+    work: (d.exp||[]).map(e => ({
+      name:      e.company,
+      position:  e.title,
+      startDate: e.from,
+      endDate:   e.to,
+      summary:   e.desc,
+    })),
+    education: (d.edu||[]).map(e => ({
+      institution: e.school,
+      area:        e.degree,
+      startDate:   e.from,
+      endDate:     e.to,
+    })),
+    skills: (d.skills||[]).map(s => ({
+      name:  s.name,
+      level: s.pct + '%',
+    })),
+    languages: (d.langs||[]).map(l => ({
+      language: l.name,
+      fluency:  l.lvl,
+    })),
+    interests: (d.hobbies||'').split(',').filter(Boolean).map(h => ({ name: h.trim() })),
+    references: (d.refs||[]).map(r => ({
+      name:      r.name,
+      reference: r.note,
+      position:  r.pos,
+      company:   r.company,
+      email:     r.email,
+      phone:     r.phone,
+    })),
+    projects: (d.projects||[]).map(p => ({
+      name:        p.title,
+      url:         p.url,
+      description: p.desc,
+      startDate:   p.from,
+      endDate:     p.to,
+    })),
+    certificates: (d.certs||[]).map(c => ({
+      name:   c.title,
+      issuer: c.issuer,
+      date:   c.date,
+      url:    c.url,
+    })),
+    // Extra fields (non-standard but useful)
+    _cvbuilder: {
+      goal:       d.goal,
+      komps:      d.komps,
+      kompsPos:   d.kompsPos,
+      hobbiesPos: d.hobbiesPos,
+      licensePos: d.licensePos,
+      license:    d.license,
+      licenseNote:d.licenseNote,
+      extraquals: d.extraquals,
+      color:      d.color,
+      font:       d.font,
+      sectionOrder: d.sectionOrder,
+      fontScale:  d.fontScale,
+      lineHeight: d.lineHeight,
+      rightBg:    d.rightBg,
+      birth:      d.birth,
+    },
+  };
+
+  const blob = new Blob([JSON.stringify(jsonResume, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (d.name||'CV').replace(/\s+/g,'_') + '_Resume.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('✓ JSON exportiert!');
+}
+
+// ─── SECTION ORDER RESET ─────────────────────────
+function resetSectionOrder() {
+  sectionOrder = ['profile','experience','education','komps','hobbies','extraquals','referenzen','zertifikate','projekte'];
+  buildSectionOrderUI();
+  render();
+  showToast('✓ Reihenfolge zurückgesetzt');
+}
+
+// ─── JSON RESUME IMPORT ──────────────────────────
 function triggerImport(){document.getElementById('import-file-input').click();}
 function handleImport(e){
   const file=e.target.files[0]; if(!file) return;
@@ -567,9 +889,38 @@ function render(){
 
   sectionOrder.forEach(key=>{const r=renderers[key];if(r) rightHTML+=r();});
 
+  // ── QR CODE OVERLAY (frei positionierbar) ──
+  const qrInCV    = (document.getElementById('qr-in-cv')||{}).checked;
+  const qrSizePx  = parseInt((document.getElementById('qr-size')||{}).value || '64');
+  const qrX       = parseFloat((document.getElementById('qr-x')||{}).value ?? '4');
+  const qrY       = parseFloat((document.getElementById('qr-y')||{}).value ?? '4');
+  const qrCaption = val('qr-caption');
+  const qrLabelPos= (document.getElementById('qr-label-pos')||{}).value || 'none';
+
+  // Remove old overlay
+  const oldOverlay = document.getElementById('cv-qr-overlay');
+  if (oldOverlay) oldOverlay.remove();
+
+  if (qrInCV && _qrDataUrl) {
+    const capEl = qrCaption && qrLabelPos !== 'none'
+      ? `<div style="font-size:8px;color:rgba(0,0,0,0.5);text-align:center;margin-${qrLabelPos==='above'?'bottom':'top'}:3px;letter-spacing:0.05em;white-space:nowrap;">${h(qrCaption)}</div>` : '';
+    const imgEl = `<img src="${_qrDataUrl}" style="width:${qrSizePx}px;height:${qrSizePx}px;display:block;image-rendering:crisp-edges;pointer-events:none;">`;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'cv-qr-overlay';
+    overlay.style.left = qrX + '%';
+    overlay.style.top  = qrY + '%';
+    overlay.innerHTML  = qrLabelPos === 'above' ? capEl + imgEl : imgEl + capEl;
+    overlay.title = 'Ziehen zum Verschieben';
+
+    document.getElementById('cv-paper').appendChild(overlay);
+    initQRDrag(overlay);
+  }
+
   const cvLeft=document.getElementById('cv-left');
   cvLeft.style.backgroundColor=col; cvLeft.style.color='#fff'; cvLeft.innerHTML=leftHTML;
   const cvRight=document.getElementById('cv-right');
+
   cvRight.innerHTML=rightHTML; cvRight.style.backgroundColor=rightBg;
   document.getElementById('cv-paper').style.fontFamily='"Source Sans 3",sans-serif';
 
@@ -616,6 +967,14 @@ function collectData(){
     kompsPos:val('f-komps-pos')||'right',hobbiesPos:val('f-hobbies-pos')||'right',licensePos:val('f-license-pos')||'right',
     color:state.color,font:state.font,photoData:state.photoData,
     fontScale:val('f-font-scale')||'100',lineHeight:val('f-line-height')||'1.75',rightBg:val('f-right-bg')||'#ffffff',
+    qrInCV: (document.getElementById('qr-in-cv')||{}).checked||false,
+    qrX: val('qr-x')||'4', qrY: val('qr-y')||'4', qrSize: val('qr-size')||'64',
+    qrContent: val('qr-content')||'web', qrCaption: val('qr-caption'),
+    qrCustom: val('qr-custom-text'), qrDataUrl: _qrDataUrl,
+    qrFrame: _qrFrame||'none', qrEcl: val('qr-ecl')||'M',
+    qrDarkColor: (document.getElementById('qr-dark-color')||{}).value||'',
+    qrLightColor: (document.getElementById('qr-light-color')||{}).value||'',
+    qrBorderSize: val('qr-border-size')||'2', qrLabelPos: val('qr-label-pos')||'none',
     sectionOrder:[...sectionOrder],
     license:['AM','A1','A2','A','B','BE','C1','C1E','C','CE','D1','D','T','L'].filter(c=>{const el=document.getElementById('lic-'+c);return el&&el.checked;}),
     licenseNote:val('f-license-note'),
@@ -644,6 +1003,27 @@ function applyData(d){
   setVal('p2-title',d.p2title);setVal('p2-freetext',d.p2free);
   if(d.fontScale){setVal('f-font-scale',d.fontScale);const lb=document.getElementById('font-scale-label');if(lb)lb.textContent=d.fontScale+'%';}
   if(d.lineHeight){setVal('f-line-height',d.lineHeight);const lb=document.getElementById('line-height-label');if(lb)lb.textContent=d.lineHeight;}
+  if(d.rightBg) setVal('f-right-bg',d.rightBg);
+  if(d.qrInCV){const el=document.getElementById('qr-in-cv');if(el){el.checked=true;const opts=document.getElementById('qr-cv-options');if(opts)opts.style.display='block';}}
+  if(d.qrX!=null){setVal('qr-x',d.qrX);const lb=document.getElementById('qr-x-label');if(lb)lb.textContent=d.qrX+'%';}
+  if(d.qrY!=null){setVal('qr-y',d.qrY);const lb=document.getElementById('qr-y-label');if(lb)lb.textContent=d.qrY+'%';}
+  if(d.qrSize){setVal('qr-size',d.qrSize);const lb=document.getElementById('qr-size-label');if(lb)lb.textContent=d.qrSize+'px';}
+  if(d.qrContent){setVal('qr-content',d.qrContent);const cw=document.getElementById('qr-custom-wrap');if(cw)cw.style.display=d.qrContent==='custom'?'block':'none';}
+  if(d.qrCaption) setVal('qr-caption',d.qrCaption);
+  if(d.qrCustom)  setVal('qr-custom-text',d.qrCustom);
+  if(d.qrEcl)    setVal('qr-ecl',d.qrEcl);
+  if(d.qrDarkColor) {const el=document.getElementById('qr-dark-color');if(el)el.value=d.qrDarkColor;}
+  if(d.qrLightColor){const el=document.getElementById('qr-light-color');if(el)el.value=d.qrLightColor;}
+  if(d.qrBorderSize){setVal('qr-border-size',d.qrBorderSize);const lb=document.getElementById('qr-border-label');if(lb)lb.textContent=d.qrBorderSize+'px';}
+  if(d.qrLabelPos){ setVal('qr-label-pos',d.qrLabelPos);const cw=document.getElementById('qr-caption-wrap');if(cw)cw.style.display=d.qrLabelPos==='none'?'none':'block';}
+  if(d.qrFrame){
+    _qrFrame=d.qrFrame;
+    const picked=document.querySelector(`.qr-frame-opt[data-frame="${d.qrFrame}"]`);
+    if(picked){document.querySelectorAll('.qr-frame-opt').forEach(x=>x.classList.remove('selected'));picked.classList.add('selected');}
+    const bw=document.getElementById('qr-border-wrap');if(bw)bw.style.display=d.qrFrame==='none'?'none':'block';
+  }
+  if(d.qrDataUrl){_qrDataUrl=d.qrDataUrl;const out=document.getElementById('qr-output');if(out){out.innerHTML=`<img src="${d.qrDataUrl}" style="max-width:160px;display:block;margin:0 auto;image-rendering:crisp-edges;">`;const lbl=document.getElementById('qr-url-label');if(lbl)lbl.textContent='(gespeicherter QR-Code)';}}
+
   if(d.photoShape)setVal('f-photo-shape',d.photoShape);
   if(d.photoSize){const el=document.getElementById('f-photo-size');if(el){el.value=d.photoSize;const lb=document.getElementById('photo-size-label');if(lb)lb.textContent=d.photoSize+'px';}}
   if(d.borderSize){const el=document.getElementById('f-border-size');if(el){el.value=d.borderSize;const lb=document.getElementById('border-size-label');if(lb)lb.textContent=d.borderSize+'px';}}
