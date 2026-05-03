@@ -7,10 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- QR Code -->
+  <!-- QR Code (qrcodejs) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- qrcode-generator fallback -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" onerror="window.QRCode=null"></script>
   <link rel="stylesheet" href="style.css">
   <style>
     /* ── LANG BTN ── */
@@ -414,25 +412,186 @@
         Ziehe die Abschnitte, um ihre Reihenfolge im Lebenslauf zu ändern.
       </div>
       <div id="section-order-list"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn-add" style="margin-top:0;" onclick="resetSectionOrder()">↺ Standard-Reihenfolge</button>
+      </div>
 
       <!-- QR CODE -->
-      <div class="section-divider" style="margin-top:1.5rem;">QR-Code</div>
-      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;line-height:1.6;">
-        Generiere einen QR-Code für deine Website oder E-Mail — zum Einbetten oder Drucken.
-      </div>
-      <button class="btn-add" onclick="generateQR()" style="margin-bottom:12px;">🔲 QR-Code generieren</button>
-      <div id="qr-output"></div>
-      <span id="qr-url-label"></span>
+      <div class="section-divider" style="margin-top:1.5rem;">🔲 QR-Code</div>
 
-      <!-- LINKEDIN IMPORT INFO -->
-      <div class="section-divider" style="margin-top:1.5rem;">Daten importieren</div>
-      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;line-height:1.6;">
-        Importiere eine <strong>JSON Resume</strong> Datei (Standard-Format). Auf LinkedIn: <em>Einstellungen → Daten exportieren → JSON</em>.
+      <!-- Toggle -->
+      <div class="form-group">
+        <label>QR-Code im Lebenslauf anzeigen</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+          <label class="toggle-switch">
+            <input type="checkbox" id="qr-in-cv" onchange="generateQR()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="font-size:12px;color:var(--ink-soft);">Im CV einbetten</span>
+        </div>
       </div>
-      <div class="import-drop" onclick="triggerImport()">
-        <div style="font-size:20px;margin-bottom:4px;">📥</div>
-        <div style="font-size:13px;font-weight:600;color:var(--ink-mid);">JSON Resume importieren</div>
-        <div style="font-size:11px;color:var(--ink-faint);margin-top:2px;">Klicken zum Auswählen</div>
+
+      <div id="qr-cv-options" style="display:none;">
+
+        <!-- Inhalt -->
+        <div class="form-group">
+          <label>QR-Inhalt</label>
+          <select id="qr-content" onchange="generateQR()">
+            <option value="web">🌐 Website-URL</option>
+            <option value="email">✉ E-Mail-Adresse</option>
+            <option value="linkedin">💼 LinkedIn-Profil</option>
+            <option value="custom">✏ Eigener Text / URL</option>
+          </select>
+        </div>
+        <div class="form-group" id="qr-custom-wrap" style="display:none;">
+          <label>Eigener QR-Inhalt</label>
+          <input type="text" id="qr-custom-text" placeholder="https://..." oninput="generateQR()">
+        </div>
+
+        <!-- Fehlerkorrektur -->
+        <div class="form-group">
+          <label>Fehlerkorrektur-Level
+            <span style="font-size:10px;color:var(--ink-faint);font-weight:400;"> — höher = robuster, aber dichter</span>
+          </label>
+          <select id="qr-ecl" onchange="generateQR()">
+            <option value="L">L — 7% (kleinster Code)</option>
+            <option value="M" selected>M — 15% (empfohlen)</option>
+            <option value="Q">Q — 25% (robust)</option>
+            <option value="H">H — 30% (max. Qualität)</option>
+          </select>
+        </div>
+
+        <!-- Position & Größe -->
+        <div class="form-group">
+          <label>Größe: <span id="qr-size-label">64px</span></label>
+          <input type="range" id="qr-size" min="40" max="160" value="64" step="4"
+                 oninput="document.getElementById('qr-size-label').textContent=this.value+'px';render()"
+                 style="width:100%;accent-color:var(--g-muted);">
+        </div>
+
+        <!-- Freie Positionierung -->
+        <div class="form-group">
+          <label>Position — Horizontal: <span id="qr-x-label">4%</span></label>
+          <input type="range" id="qr-x" min="-8" max="92" value="4" step="1"
+                 oninput="document.getElementById('qr-x-label').textContent=this.value+'%';render()"
+                 style="width:100%;accent-color:var(--g-muted);">
+        </div>
+        <div class="form-group">
+          <label>Position — Vertikal: <span id="qr-y-label">4%</span></label>
+          <input type="range" id="qr-y" min="-8" max="92" value="4" step="1"
+                 oninput="document.getElementById('qr-y-label').textContent=this.value+'%';render()"
+                 style="width:100%;accent-color:var(--g-muted);">
+        </div>
+
+        <!-- Schnell-Positionen -->
+        <div class="form-group">
+          <label>Schnell-Position</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:5px;">
+            <button class="qr-snap-btn" onclick="snapQR(4,4)">↖ Links oben</button>
+            <button class="qr-snap-btn" onclick="snapQR(38,4)">↑ Mitte oben</button>
+            <button class="qr-snap-btn" onclick="snapQR(88,4)">↗ Rechts oben</button>
+            <button class="qr-snap-btn" onclick="snapQR(4,44)">← Links Mitte</button>
+            <button class="qr-snap-btn" onclick="snapQR(38,44)">⊙ Zentriert</button>
+            <button class="qr-snap-btn" onclick="snapQR(88,44)">→ Rechts Mitte</button>
+            <button class="qr-snap-btn" onclick="snapQR(4,86)">↙ Links unten</button>
+            <button class="qr-snap-btn" onclick="snapQR(38,86)">↓ Mitte unten</button>
+            <button class="qr-snap-btn" onclick="snapQR(88,86)">↘ Rechts unten</button>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--ink-faint);margin-top:2px;line-height:1.5;">
+          💡 Du kannst den QR-Code auch direkt im Vorschau-Bereich mit der Maus ziehen.
+        </div>
+
+        <!-- Farben -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>QR-Farbe</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="color" id="qr-dark-color" value="#2d3d2c" onchange="generateQR()" style="width:36px;height:30px;border:1px solid var(--g-pale);border-radius:5px;padding:2px;cursor:pointer;">
+              <button onclick="document.getElementById('qr-dark-color').value=state.color;generateQR()" style="font-size:10px;border:1px solid var(--g-pale);background:#fff;border-radius:5px;padding:3px 7px;cursor:pointer;white-space:nowrap;">= Akzentfarbe</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Hintergrundfarbe</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="color" id="qr-light-color" value="#ffffff" onchange="generateQR()" style="width:36px;height:30px;border:1px solid var(--g-pale);border-radius:5px;padding:2px;cursor:pointer;">
+              <button onclick="document.getElementById('qr-light-color').value='transparent';generateQR()" style="font-size:10px;border:1px solid var(--g-pale);background:#fff;border-radius:5px;padding:3px 7px;cursor:pointer;">Transparent</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rahmen-Stil -->
+        <div class="form-group">
+          <label>Rahmen-Stil</label>
+          <div class="qr-frame-options" id="qr-frame-picker">
+            <div class="qr-frame-opt selected" data-frame="none"     onclick="selectQRFrame(this,'none')">     <span class="qr-frame-preview" style="border:none;">▪</span><span>Kein</span></div>
+            <div class="qr-frame-opt"          data-frame="simple"   onclick="selectQRFrame(this,'simple')">   <span class="qr-frame-preview" style="border:2px solid #333;border-radius:0;">▪</span><span>Eckig</span></div>
+            <div class="qr-frame-opt"          data-frame="rounded"  onclick="selectQRFrame(this,'rounded')">  <span class="qr-frame-preview" style="border:2px solid #333;border-radius:8px;">▪</span><span>Abgerundet</span></div>
+            <div class="qr-frame-opt"          data-frame="shadow"   onclick="selectQRFrame(this,'shadow')">   <span class="qr-frame-preview" style="border:1px solid #ccc;box-shadow:2px 2px 0 #bbb;">▪</span><span>Schatten</span></div>
+            <div class="qr-frame-opt"          data-frame="badge"    onclick="selectQRFrame(this,'badge')">    <span class="qr-frame-preview" style="border:2px solid #333;border-radius:8px;background:#f5f5f5;">▪</span><span>Badge</span></div>
+            <div class="qr-frame-opt"          data-frame="colored"  onclick="selectQRFrame(this,'colored')">  <span class="qr-frame-preview qr-colored-prev">▪</span><span>Farbig</span></div>
+          </div>
+        </div>
+
+        <!-- Rahmen-Stärke (wenn Rahmen aktiv) -->
+        <div class="form-group" id="qr-border-wrap">
+          <label>Rahmen-Stärke: <span id="qr-border-label">2px</span></label>
+          <input type="range" id="qr-border-size" min="1" max="8" value="2" step="1"
+                 oninput="document.getElementById('qr-border-label').textContent=this.value+'px';render()"
+                 style="width:100%;accent-color:var(--g-muted);">
+        </div>
+
+        <!-- Beschriftung -->
+        <div class="form-group">
+          <label>Beschriftungsposition</label>
+          <select id="qr-label-pos" onchange="render()">
+            <option value="none">Keine Beschriftung</option>
+            <option value="below">Unter dem QR-Code</option>
+            <option value="above">Über dem QR-Code</option>
+          </select>
+        </div>
+        <div class="form-group" id="qr-caption-wrap">
+          <label>Beschriftungstext</label>
+          <input type="text" id="qr-caption" placeholder="z.B. Portfolio scannen" oninput="render()" value="">
+        </div>
+
+      </div><!-- end qr-cv-options -->
+
+      <!-- Vorschau & Buttons -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <button class="btn-add" style="margin-top:0;flex:1;" onclick="generateQR()">🔲 QR generieren</button>
+        <button class="btn-add" style="margin-top:0;flex:1;" onclick="downloadQR()">⬇ PNG herunterladen</button>
+      </div>
+      <div id="qr-output" style="text-align:center;min-height:40px;"></div>
+      <span id="qr-url-label" style="font-size:11px;color:var(--ink-faint);text-align:center;display:block;margin-top:6px;word-break:break-all;"></span>
+
+      <!-- Tipps -->
+      <div style="background:#f0f4ef;border-radius:8px;padding:10px 12px;font-size:11px;color:var(--ink-soft);line-height:1.7;margin-top:10px;">
+        💡 <strong>Tipps:</strong> Höherer ECL-Level → robuster beim Scannen auch wenn der Druck nicht perfekt ist.
+        Verwende <strong>H-Level</strong> wenn du ein Logo in der Mitte einblenden möchtest (kommt bald).
+        Teste den QR immer mit dem Handy bevor du druckst.
+      </div>
+
+      <!-- JSON IMPORT / EXPORT -->
+      <div class="section-divider" style="margin-top:1.5rem;">📄 Daten Import / Export</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div class="import-drop" onclick="triggerImport()" style="padding:12px;">
+          <div style="font-size:22px;margin-bottom:4px;">📥</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink-mid);">JSON importieren</div>
+          <div style="font-size:10px;color:var(--ink-faint);margin-top:2px;">JSON Resume Format</div>
+        </div>
+        <div class="import-drop" onclick="exportJSON()" style="padding:12px;">
+          <div style="font-size:22px;margin-bottom:4px;">📤</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink-mid);">JSON exportieren</div>
+          <div style="font-size:10px;color:var(--ink-faint);margin-top:2px;">Backup / Weitergabe</div>
+        </div>
+      </div>
+
+      <div style="background:#f0f4ef;border-radius:8px;padding:10px 12px;font-size:11px;color:var(--ink-soft);line-height:1.7;">
+        <strong>Import:</strong> JSON Resume Standard (jsonresume.org)<br>
+        <strong>Export:</strong> Speichert alle deine Daten als JSON-Datei — ideal als Backup oder zum Übertragen auf ein anderes Gerät.<br>
+        <strong>LinkedIn:</strong> Einstellungen → Datenschutz → Daten abrufen → JSON exportieren
       </div>
 
     </div><!-- end panel-design -->
@@ -471,11 +630,11 @@
         </div>
       </div>
     </div>
-    <div class="cv-paper" id="cv-paper">
+    <div class="cv-paper" id="cv-paper" style="position:relative;">
       <div class="cv-left"  id="cv-left"></div>
       <div class="cv-right" id="cv-right"></div>
     </div>
-    <div class="cv-paper" id="cv-paper-2" style="display:none;margin-top:2rem;">
+    <div class="cv-paper" id="cv-paper-2" style="display:none;margin-top:2rem;position:relative;">
       <div class="cv-left"  id="cv-left-2"></div>
       <div class="cv-right" id="cv-right-2"></div>
     </div>
@@ -484,19 +643,6 @@
 </div><!-- end .app -->
 
 <script src="i18n.js"></script>
-<script>
-// qrcode-generator polyfill if qrcodejs not available
-if (typeof qrcode === 'undefined') {
-  window.qrcode = function(){ return { addData:()=>{}, make:()=>{}, createImgTag:()=>'<div style="padding:20px;color:#888;font-size:12px;">QR-Code Bibliothek nicht geladen.<br>Bitte prüfe deine Internetverbindung.</div>' }; };
-}
-</script>
-<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js" onerror=""></script>
-<script>
-// Alternative qrcode generator (qrcode-generator library)
-if (typeof qrcode === 'undefined' && typeof QRCode !== 'undefined') {
-  // Map QRCode to qrcode API used in script
-}
-</script>
 <script src="script.js"></script>
 </body>
 </html>
