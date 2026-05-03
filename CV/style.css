@@ -381,3 +381,35 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.6; }
 /* ── FIX ENTRY CARD HEADER WITH DRAG HANDLE ── */
 .entry-card-header { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
 .entry-card-label  { flex: 1; font-size: 12px; font-weight: 600; color: var(--ink-mid); }
+
+/* ── TOGGLE SWITCH ── */
+.toggle-switch { position:relative; display:inline-block; width:42px; height:24px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; cursor:pointer; inset:0; background:var(--g-pale); border-radius:24px; transition:0.25s; border:1px solid #ccc; }
+.toggle-slider:before { content:''; position:absolute; height:18px; width:18px; left:2px; bottom:2px; background:#fff; border-radius:50%; transition:0.25s; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+.toggle-switch input:checked + .toggle-slider { background:var(--g-muted); border-color:var(--g-muted); }
+.toggle-switch input:checked + .toggle-slider:before { transform:translateX(18px); }
+
+/* ── QR FRAME PICKER ── */
+.qr-frame-options { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:6px; }
+.qr-frame-opt { border:1.5px solid var(--g-pale); border-radius:7px; padding:8px 6px; cursor:pointer; text-align:center; transition:all 0.18s; font-size:10px; font-weight:600; color:var(--ink-soft); display:flex; flex-direction:column; align-items:center; gap:4px; }
+.qr-frame-opt:hover { border-color:var(--g-muted); }
+.qr-frame-opt.selected { border-color:var(--g-muted); background:var(--g-bg); color:var(--g-muted); }
+.qr-frame-preview { display:flex; align-items:center; justify-content:center; width:28px; height:28px; font-size:16px; color:transparent; background:#e0e0e0; }
+.qr-colored-prev { background:var(--g-muted,#5a7358); border-radius:6px; color:transparent; }
+
+/* ── QR SNAP BUTTONS ── */
+.qr-snap-btn {
+  border: 1px solid var(--g-pale); background: #fff; border-radius: 5px;
+  padding: 5px 4px; font-size: 10px; font-weight: 600; color: var(--ink-soft);
+  cursor: pointer; transition: all 0.15s; text-align: center; width: 100%;
+}
+.qr-snap-btn:hover { border-color: var(--g-muted); background: var(--g-bg); color: var(--g-muted); }
+
+/* ── QR OVERLAY ON CV ── */
+#cv-qr-overlay {
+  position: absolute; cursor: grab; user-select: none; z-index: 50;
+  transition: box-shadow 0.15s;
+}
+#cv-qr-overlay:active { cursor: grabbing; }
+#cv-qr-overlay:hover  { filter: brightness(1.05); }
