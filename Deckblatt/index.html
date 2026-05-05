@@ -46,6 +46,11 @@
     <button class="btn-pdf" onclick="downloadPDF()" data-i18n="btnPdf">
       ⬇ Als PDF speichern
     </button>
+
+    <!-- FEATURE #8: PNG-Export -->
+    <button class="btn-png" onclick="downloadPNG()" data-i18n="btnPng">
+      🖼 Als PNG speichern
+    </button>
   </div>
 
 </div><!-- /topbar -->
@@ -83,6 +88,27 @@
         style="background:#f0f5f3;color:#3d5c52;border:1.5px solid #dde9e5;"
         onclick="setTheme('minimal',this)"
         data-i18n="tMinimal">Minimal</button>
+
+      <!-- SCHRITT 13: 4 neue Themes -->
+      <button class="tbtn" data-t="elegant"
+        style="background:#1a1a2e;color:#c9a84c;"
+        onclick="setTheme('elegant',this)"
+        data-i18n="tElegant">Elegant</button>
+
+      <button class="tbtn" data-t="modern"
+        style="background:#2563eb;color:#fff;"
+        onclick="setTheme('modern',this)"
+        data-i18n="tModern">Modern</button>
+
+      <button class="tbtn" data-t="bold"
+        style="background:#111;color:#fff;"
+        onclick="setTheme('bold',this)"
+        data-i18n="tBold">Bold</button>
+
+      <button class="tbtn" data-t="clean"
+        style="background:#f8f8f8;color:#1a1a2e;border:1.5px solid #ccc;"
+        onclick="setTheme('clean',this)"
+        data-i18n="tClean">Clean</button>
     </div>
 
     <!-- Personal data -->
@@ -113,6 +139,12 @@
       <input type="text" id="f-email" data-ph="pEmail"
              placeholder="name@email.de" oninput="renderCover()">
     </div>
+    <!-- FEATURE #9: Geburtsdatum -->
+    <div class="fg">
+      <label data-i18n="lDob">Geburtsdatum (optional)</label>
+      <input type="text" id="f-dob" data-ph="pDob"
+             placeholder="01.01.1990" oninput="renderCover()">
+    </div>
 
     <!-- Application -->
     <div class="st" data-i18n="secJob">Bewerbung</div>
@@ -126,6 +158,12 @@
       <label data-i18n="lCompany">Bei Unternehmen (optional)</label>
       <input type="text" id="f-company" data-ph="pCompany"
              placeholder="z.B. Siemens AG" oninput="renderCover()">
+    </div>
+    <!-- FEATURE #9: Bewerbungsdatum -->
+    <div class="fg">
+      <label data-i18n="lAppDate">Bewerbungsdatum</label>
+      <input type="text" id="f-appdate" data-ph="pAppDate"
+             placeholder="01.01.2025" oninput="renderCover()">
     </div>
 
     <!-- Photo upload -->
@@ -186,6 +224,14 @@
         oninput="document.getElementById('lbl-sz').textContent=this.value+'px';renderCover()">
     </div>
 
+    <!-- FEATURE #11: Foto-Filter -->
+    <div class="st" data-i18n="secFilter">Foto-Filter</div>
+    <div class="chips">
+      <div class="chip on" data-fi="none"  onclick="setFilter('none',this)"  data-i18n="fiNone">Normal</div>
+      <div class="chip"    data-fi="bw"    onclick="setFilter('bw',this)"    data-i18n="fiBw">S/W</div>
+      <div class="chip"    data-fi="sepia" onclick="setFilter('sepia',this)" data-i18n="fiSepia">Sepia</div>
+    </div>
+
     <!-- Frame style -->
     <div class="st" data-i18n="secFrame">Rahmen-Stil</div>
     <div class="chips">
@@ -195,6 +241,14 @@
       <div class="chip"     data-f="sage"   onclick="setFrame('sage',this)"   data-i18n="frSage">Salbei</div>
       <div class="chip"     data-f="dark"   onclick="setFrame('dark',this)"   data-i18n="frDark">Dunkel</div>
       <div class="chip"     data-f="shadow" onclick="setFrame('shadow',this)" data-i18n="frShadow">Schatten</div>
+    </div>
+
+    <!-- FEATURE #12: Schriftart -->
+    <div class="st" data-i18n="secFont">Schriftart</div>
+    <div class="chips">
+      <div class="chip on" data-fn="playfair"  onclick="setFont('playfair',this)"  data-i18n="fnPlayfair">Playfair</div>
+      <div class="chip"    data-fn="source"    onclick="setFont('source',this)"    data-i18n="fnSource">Source Sans</div>
+      <div class="chip"    data-fn="cormorant" onclick="setFont('cormorant',this)" data-i18n="fnCormorant">Cormorant</div>
     </div>
 
     <!-- QR Code -->
@@ -211,11 +265,44 @@
              placeholder="https://linkedin.com/in/..." oninput="renderCover()">
     </div>
 
+    <!-- FEATURE #7: Akzentfarbe-Picker -->
+    <div class="st" data-i18n="secAccent">Akzentfarbe</div>
+    <div class="color-row" id="swatch-row">
+      <!-- Voreingestellte Farben – JS generiert active-Klasse -->
+      <div class="color-swatch active" data-color="#5a7358" style="background:#5a7358"
+           onclick="setAccent('#5a7358',this)" title="Grün (Standard)"></div>
+      <div class="color-swatch" data-color="#2c5f8a" style="background:#2c5f8a"
+           onclick="setAccent('#2c5f8a',this)" title="Blau"></div>
+      <div class="color-swatch" data-color="#7a3c5c" style="background:#7a3c5c"
+           onclick="setAccent('#7a3c5c',this)" title="Bordeaux"></div>
+      <div class="color-swatch" data-color="#8a6c3a" style="background:#8a6c3a"
+           onclick="setAccent('#8a6c3a',this)" title="Ocker"></div>
+      <div class="color-swatch" data-color="#3a3a3a" style="background:#3a3a3a"
+           onclick="setAccent('#3a3a3a',this)" title="Anthrazit"></div>
+      <div class="color-swatch" data-color="#5c4033" style="background:#5c4033"
+           onclick="setAccent('#5c4033',this)" title="Braun"></div>
+      <!-- Freier Farbwähler -->
+      <div class="color-picker-wrap">
+        <label for="f-accent" data-i18n="lCustomColor">Eigene:</label>
+        <input type="color" id="f-accent" class="accent-input"
+               value="#5a7358" oninput="setAccent(this.value, null)">
+      </div>
+    </div>
+
     <!-- Note -->
     <div style="height:1px;background:rgba(90,122,110,.15);margin:14px 0 10px;"></div>
     <p class="note-txt" data-i18n="lNote">
       Alle Daten bleiben lokal. Kein Server, kein Upload.
     </p>
+
+    <!-- FEATURE #6: Reset-Button -->
+    <button
+      class="reset-btn"
+      onclick="resetAll()"
+      data-i18n="btnReset"
+      title="Alle Felder leeren">
+      🗑 Alles zurücksetzen
+    </button>
 
   </aside><!-- /editor -->
 
