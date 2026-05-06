@@ -1050,6 +1050,8 @@ function setLang(lang) {
   document.documentElement.setAttribute('dir', isAr ? 'rtl' : 'ltr');
   document.documentElement.setAttribute('lang', lang);
   applyTranslations();
+  if (typeof buildSectionOrderUI === 'function') buildSectionOrderUI();
+  if (typeof buildRoleSuggestions === 'function') buildRoleSuggestions();
   render();
 }
 
