@@ -10,67 +10,6 @@
   <!-- QR Code (qrcodejs) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="style.css">
-  <style>
-    /* ── LANG BTN ── */
-    .lang-switcher { display:flex; gap:4px; align-items:center; margin-right:10px; }
-    .lang-btn { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); border-radius:5px; padding:4px 9px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.18s; font-family:'Source Sans 3',sans-serif; }
-    .lang-btn:hover { background:rgba(255,255,255,0.2); color:#fff; }
-    .lang-btn.active { background:var(--g-light); color:var(--g-dark); border-color:var(--g-light); }
-
-    /* ── RTL ── */
-    [dir="rtl"] .editor { border-right:none; border-left:1px solid var(--g-pale); }
-    [dir="rtl"] .etab   { letter-spacing:0; }
-
-    /* ── FÜHRERSCHEIN CHECKBOXEN ── */
-    #license-class-checkboxes label { background:var(--g-pale); border:1px solid var(--g-light); border-radius:6px; padding:4px 10px; font-weight:600; transition:background 0.15s,border-color 0.15s; cursor:pointer; }
-    #license-class-checkboxes label:has(input:checked) { background:var(--g-muted); color:#fff; border-color:var(--g-muted); }
-    #license-class-checkboxes input[type="checkbox"] { accent-color:var(--g-muted); margin-right:3px; }
-
-    /* ── PROGRESS BAR ── */
-    .progress-bar-wrap { padding:6px 1.25rem 0; background:#fff; border-bottom:1px solid var(--g-pale); }
-    .progress-bar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
-    .progress-bar-label { font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-faint); }
-    .progress-bar-track { height:5px; background:var(--g-pale); border-radius:3px; margin-bottom:8px; overflow:hidden; }
-    #progress-fill { height:100%; border-radius:3px; width:0%; transition:width 0.4s,background 0.4s; }
-    #progress-label { font-size:11px; font-weight:700; color:var(--ink-mid); }
-
-    /* ── PROFILE MODAL ── */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center; }
-    .modal-box { background:#fff; border-radius:12px; padding:1.5rem; width:360px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,0.25); }
-    .modal-title { font-size:16px; font-weight:700; color:var(--ink); margin-bottom:1rem; }
-    .modal-close { float:right; background:none; border:none; font-size:20px; cursor:pointer; color:var(--ink-faint); margin-top:-4px; }
-    .profile-row { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border:1px solid var(--g-pale); border-radius:6px; margin-bottom:6px; }
-    .profile-row.active { border-color:var(--g-muted); background:var(--g-bg); }
-    .profile-name { font-size:13px; font-weight:600; color:var(--ink-mid); }
-    .profile-btns { display:flex; gap:6px; }
-    .pbtn { border:1px solid var(--g-pale); background:#fff; border-radius:5px; padding:4px 10px; font-size:11px; font-weight:600; cursor:pointer; }
-    .pbtn:hover { background:var(--g-bg); }
-    .pbtn.danger { color:var(--red); border-color:#f5c6c6; }
-    .pbtn.danger:hover { background:#fff5f5; }
-    .profile-actions { display:flex; gap:8px; margin-top:1rem; }
-
-    /* ── SECTION ORDER ── */
-    .section-order-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--g-pale); border-radius:6px; margin-bottom:5px; font-size:12px; font-weight:600; color:var(--ink-mid); background:#fff; cursor:grab; transition:box-shadow 0.15s; user-select:none; }
-    .section-order-item.dragging { opacity:0.4; }
-    .section-order-item.drag-over { border-color:var(--g-muted); box-shadow:0 0 0 2px var(--g-pale); }
-    .so-handle { color:var(--ink-faint); font-size:16px; cursor:grab; }
-
-    /* ── DRAG HANDLE IN CARDS ── */
-    .drag-handle { color:var(--ink-faint); font-size:16px; cursor:grab; padding:0 4px; flex-shrink:0; }
-    .entry-card-header { display:flex; align-items:center; gap:6px; }
-    .entry-card-label { flex:1; font-size:12px; font-weight:600; color:var(--ink-mid); }
-
-    /* ── CHAR COUNTER ── */
-    .char-counter { font-size:11px; font-weight:600; transition:color 0.2s; }
-
-    /* ── IMPORT AREA ── */
-    .import-drop { border:2px dashed var(--g-pale); border-radius:8px; padding:12px; text-align:center; cursor:pointer; transition:all 0.2s; }
-    .import-drop:hover { border-color:var(--g-muted); background:var(--g-bg); }
-
-    /* ── QR OUTPUT ── */
-    #qr-output img { border-radius:8px; }
-    #qr-url-label { font-size:11px; color:var(--ink-faint); text-align:center; display:block; margin-top:6px; word-break:break-all; }
-  </style>
 </head>
 <body>
 
@@ -83,8 +22,8 @@
       <button class="lang-btn"        data-lang="en" onclick="setLang('en')">🇬🇧 EN</button>
       <button class="lang-btn"        data-lang="ar" onclick="setLang('ar')">🇸🇾 عر</button>
     </div>
-    <button class="btn btn-ghost"   onclick="openProfileModal()"  title="Profile verwalten">👤 Profile</button>
-    <button class="btn btn-ghost"   onclick="triggerImport()"     title="JSON Resume importieren">📥 Import</button>
+    <button class="btn btn-ghost"   onclick="openProfileModal()"  title="Profile verwalten" data-i18n="btnProfile">👤 Profile</button>
+    <button class="btn btn-ghost"   onclick="triggerImport()"     title="JSON Resume importieren" data-i18n="btnImport">📥 Import</button>
     <button class="btn btn-ghost"   onclick="resetAll()"          data-i18n="btnReset">Zurücksetzen</button>
     <button class="btn btn-ghost"   onclick="saveData()"          data-i18n="btnSave">💾 Speichern</button>
     <button class="btn btn-ghost"   onclick="downloadPDF()"       data-i18n="btnDownloadPDF">⬇ PDF</button>
@@ -95,15 +34,15 @@
 <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <!-- ── PROFILE MODAL ── -->
-<div class="modal-overlay" id="profile-modal" onclick="if(event.target===this)closeProfileModal()">
+<div class="modal-overlay" id="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" onclick="if(event.target===this)closeProfileModal()">
   <div class="modal-box">
-    <button class="modal-close" onclick="closeProfileModal()">×</button>
-    <div class="modal-title">👤 Profile <span id="profile-count" style="font-size:12px;color:#888;font-weight:400;"></span></div>
+    <button class="modal-close" onclick="closeProfileModal()" aria-label="Schließen">×</button>
+    <div class="modal-title" id="profile-modal-title" data-i18n="btnProfile">👤 Profile <span id="profile-count" style="font-size:12px;color:#888;font-weight:400;"></span></div>
     <div id="profiles-list"></div>
     <div class="profile-actions">
-      <button class="btn btn-primary" onclick="saveAsProfile()" style="flex:1;">+ Aktuellen Stand speichern</button>
+      <button class="btn btn-primary" onclick="saveAsProfile()" style="flex:1;" data-i18n="btnSaveProfile">+ Aktuellen Stand speichern</button>
     </div>
-    <div style="font-size:11px;color:#aaa;margin-top:10px;">Profile werden lokal im Browser gespeichert. Max. 5 Profile.</div>
+    <div style="font-size:11px;color:#aaa;margin-top:10px;" data-i18n="profilesLocalHint">Profile werden lokal im Browser gespeichert. Max. 5 Profile.</div>
   </div>
 </div>
 
@@ -115,7 +54,7 @@
     <!-- Progress bar -->
     <div class="progress-bar-wrap">
       <div class="progress-bar-header">
-        <span class="progress-bar-label">Vollständigkeit</span>
+        <span class="progress-bar-label" data-i18n="spanCompleteness">Vollständigkeit</span>
         <span id="progress-label" style="font-size:11px;font-weight:700;color:var(--ink-mid);">0%</span>
       </div>
       <div class="progress-bar-track"><div id="progress-fill"></div></div>
@@ -126,7 +65,7 @@
       <button class="etab"        onclick="switchTab('experience',this)" data-i18n="tabExperience">Erfahrung</button>
       <button class="etab"        onclick="switchTab('education',this)"  data-i18n="tabEducation">Bildung</button>
       <button class="etab"        onclick="switchTab('skills',this)"     data-i18n="tabSkills">Skills</button>
-      <button class="etab"        onclick="switchTab('extras',this)">Extras</button>
+      <button class="etab"        onclick="switchTab('extras',this)" data-i18n="btnExtras">Extras</button>
       <button class="etab"        onclick="switchTab('design',this)"     data-i18n="tabDesign">Design</button>
       <button class="etab"        onclick="switchTab('page2',this)"      data-i18n="tabPage2">+ S.2</button>
     </div>
@@ -150,7 +89,7 @@
         <div class="photo-preview-wrap">
           <img id="photo-preview-img" class="photo-preview-img" src="" alt="">
           <div class="photo-preview-info">
-            <div class="photo-preview-name" id="photo-preview-name">Dein Foto</div>
+            <div class="photo-preview-name" id="photo-preview-name" data-i18n="labelYourPhoto">Dein Foto</div>
             <div class="photo-preview-sub" data-i18n="photoShown">Wird im Lebenslauf angezeigt</div>
             <div class="photo-btns">
               <button class="photo-btn" onclick="document.getElementById('photo-input').click()" data-i18n="photoChange">🔄 Ändern</button>
@@ -165,45 +104,55 @@
             <option value="square" data-i18n="optSquare">Quadratisch (abgerundet)</option>
           </select>
         </div>
+        <div style="margin-top:10px;">
+          <label><span data-i18n="labelPhotoPos">Gesicht-Position</span>: <span id="photo-pos-label">25%</span></label>
+          <input type="range" id="f-photo-pos" min="0" max="60" value="25" step="5"
+                 oninput="document.getElementById('photo-pos-label').textContent=this.value+'%';render()"
+                 style="width:100%;accent-color:var(--g-muted);margin-top:4px;">
+        </div>
       </div>
 
       <div class="section-divider" style="margin-top:1.25rem;" data-i18n="sectionPersonal">Persönliche Daten</div>
       <div class="form-group">
         <label data-i18n="labelName">Vollständiger Name</label>
-        <input type="text" id="f-name" placeholder="z.B. Max Mustermann" oninput="render();updateProgress()">
+        <input type="text" id="f-name" placeholder="z.B. Max Mustermann" data-i18n="placeholderName" data-i18n-attr="placeholder" oninput="renderDebounced();updateProgress()">
       </div>
       <div class="form-group">
         <label data-i18n="labelRole">Berufsbezeichnung</label>
-        <input type="text" id="f-role" list="role-suggestions" placeholder="z.B. Angehender Fachinformatiker" oninput="render();updateProgress()">
+        <input type="text" id="f-role" list="role-suggestions" placeholder="z.B. Angehender Fachinformatiker" data-i18n="placeholderRole" data-i18n-attr="placeholder" oninput="renderDebounced();updateProgress()">
         <datalist id="role-suggestions"></datalist>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label data-i18n="labelEmail">E-Mail</label>
-          <input type="email" id="f-email" placeholder="name@email.de" oninput="render();updateProgress()">
+          <input type="email" id="f-email" placeholder="name@email.de" data-i18n="placeholderEmail" data-i18n-attr="placeholder" oninput="renderDebounced();updateProgress()">
         </div>
         <div class="form-group">
           <label data-i18n="labelPhone">Telefon</label>
-          <input type="tel" id="f-phone" placeholder="0157 ..." oninput="render();updateProgress()">
+          <input type="tel" id="f-phone" placeholder="0157 ..." data-i18n="placeholderPhone" data-i18n-attr="placeholder" oninput="renderDebounced();updateProgress()">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label data-i18n="labelAddress">Adresse / Ort</label>
-          <input type="text" id="f-address" placeholder="Stadt, Land" oninput="render();updateProgress()">
+          <input type="text" id="f-address" placeholder="Stadt, Land" data-i18n="placeholderAddress" data-i18n-attr="placeholder" oninput="renderDebounced();updateProgress()">
         </div>
         <div class="form-group">
           <label data-i18n="labelBirth">Geburtsdatum</label>
-          <input type="text" id="f-birth" placeholder="TT.MM.JJJJ" oninput="render()">
+          <input type="text" id="f-birth" placeholder="TT.MM.JJJJ" data-i18n="placeholderBirth" data-i18n-attr="placeholder" oninput="renderDebounced()">
         </div>
       </div>
       <div class="form-group">
         <label data-i18n="labelWeb">Website-URL</label>
-        <input type="text" id="f-web" placeholder="https://meine-webseite.de" oninput="render()">
+        <input type="text" id="f-web" placeholder="https://meine-webseite.de" data-i18n="placeholderWeb" data-i18n-attr="placeholder" oninput="renderDebounced()">
       </div>
       <div class="form-group">
         <label data-i18n="labelWebLabel">Link-Text</label>
-        <input type="text" id="f-web-label" placeholder="Website" oninput="render()" value="Website">
+        <input type="text" id="f-web-label" placeholder="Website" data-i18n="placeholderWebLabel" data-i18n-attr="placeholder" oninput="renderDebounced()">
+      </div>
+      <div class="form-group">
+        <label data-i18n="labelLinkedIn">LinkedIn-Profil-URL</label>
+        <input type="text" id="f-linkedin" placeholder="https://linkedin.com/in/..." data-i18n="placeholderLinkedIn" data-i18n-attr="placeholder" oninput="renderDebounced()">
       </div>
 
       <div class="section-divider" data-i18n="sectionProfile">Profil &amp; Zusammenfassung</div>
@@ -212,7 +161,7 @@
           <label style="margin-bottom:0;" data-i18n="labelSummary">Kurzprofil</label>
           <span class="char-counter" id="summary-char-count">0 / 600</span>
         </div>
-        <textarea id="f-summary" rows="5" placeholder="Beschreibe dich in 3–5 Sätzen..." oninput="render();updateProgress();updateCharCount()"></textarea>
+        <textarea id="f-summary" rows="5" placeholder="Beschreiben Sie sich in 3–5 Sätzen ..." data-i18n="placeholderSummary" data-i18n-attr="placeholder" oninput="renderDebounced();updateProgress();updateCharCount()"></textarea>
       </div>
       <div class="form-group" style="background:#f0f4ef;border-radius:6px;padding:8px 10px;">
         <span style="font-size:11px;color:#5a7358;" data-i18n="websiteTip">💡 Tipp: Schreibe <strong>%%WEBSITE%%</strong> im Text.</span>
@@ -221,14 +170,14 @@
       <div class="section-divider" data-i18n="sectionGoal">Zielsetzung</div>
       <div class="form-group">
         <label data-i18n="labelGoal">Berufliches Ziel</label>
-        <textarea id="f-goal" rows="3" placeholder="Was strebst du an?" oninput="render()"></textarea>
+        <textarea id="f-goal" rows="3" placeholder="Was streben Sie an?" data-i18n="placeholderGoal" data-i18n-attr="placeholder" oninput="renderDebounced()"></textarea>
       </div>
     </div>
 
     <!-- ── ERFAHRUNG ── -->
     <div id="panel-experience" class="epanel">
       <div class="section-divider" data-i18n="sectionExperience">Berufserfahrung</div>
-      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;">Einträge per Drag &amp; Drop umsortieren ⠿</div>
+      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;" data-i18n="dragHint">Einträge per Drag &amp; Drop umsortieren ⠿</div>
       <div id="exp-list"></div>
       <button class="btn-add" onclick="addEntry('exp')" data-i18n="btnAddExperience">+ Berufserfahrung hinzufügen</button>
     </div>
@@ -236,7 +185,7 @@
     <!-- ── BILDUNG ── -->
     <div id="panel-education" class="epanel">
       <div class="section-divider" data-i18n="sectionEducation">Ausbildung &amp; Bildung</div>
-      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;">Einträge per Drag &amp; Drop umsortieren ⠿</div>
+      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;" data-i18n="dragHint">Einträge per Drag &amp; Drop umsortieren ⠿</div>
       <div id="edu-list"></div>
       <button class="btn-add" onclick="addEntry('edu')" data-i18n="btnAddEducation">+ Bildungseintrag hinzufügen</button>
     </div>
@@ -254,32 +203,32 @@
       <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionKomps">Kompetenzen</div>
       <div class="form-group">
         <label data-i18n="labelKomps">Kompetenzen (eine pro Zeile)</label>
-        <textarea id="f-komps" rows="5" placeholder="Analytisches Denkvermögen" oninput="render()"></textarea>
+        <textarea id="f-komps" rows="5" placeholder="Analytisches Denkvermögen" data-i18n="placeholderKomps" data-i18n-attr="placeholder" oninput="renderDebounced()"></textarea>
       </div>
       <div class="form-group">
-        <label>Position im Lebenslauf</label>
+        <label data-i18n="labelPosInCV">Position im Lebenslauf</label>
         <select id="f-komps-pos" onchange="render()">
-          <option value="right">➡ Rechts</option>
-          <option value="left">⬅ Links (Seitenleiste)</option>
+          <option value="right" data-i18n="optRight">➡ Rechts</option>
+          <option value="left" data-i18n="optLeft">⬅ Links (Seitenleiste)</option>
         </select>
       </div>
 
       <div class="section-divider" style="margin-top:1rem;" data-i18n="sectionHobbies">Hobbys &amp; Interessen</div>
       <div class="form-group">
         <label data-i18n="labelHobbies">Hobbys (kommagetrennt)</label>
-        <input type="text" id="f-hobbies" placeholder="Schach, Programmierung..." oninput="render()">
+        <input type="text" id="f-hobbies" placeholder="Schach, Programmierung..." data-i18n="placeholderHobbies" data-i18n-attr="placeholder" oninput="renderDebounced()">
       </div>
       <div class="form-group">
-        <label>Tag-Schriftgröße: <span id="hobbies-size-label">10px</span></label>
+        <label><span data-i18n="labelTagSize">Tag-Schriftgröße</span>: <span id="hobbies-size-label">10px</span></label>
         <input type="range" id="f-hobbies-size" min="8" max="14" value="10" step="1"
                oninput="document.getElementById('hobbies-size-label').textContent=this.value+'px';render()"
                style="width:100%;accent-color:var(--g-muted);">
       </div>
       <div class="form-group">
-        <label>Position im Lebenslauf</label>
+        <label data-i18n="labelPosInCV">Position im Lebenslauf</label>
         <select id="f-hobbies-pos" onchange="render()">
-          <option value="right">➡ Rechts</option>
-          <option value="left">⬅ Links (Seitenleiste)</option>
+          <option value="right" data-i18n="optRight">➡ Rechts</option>
+          <option value="left" data-i18n="optLeft">⬅ Links (Seitenleiste)</option>
         </select>
       </div>
 
@@ -306,13 +255,13 @@
       </div>
       <div class="form-group">
         <label data-i18n="labelLicenseNote">Zusatzinfo (optional)</label>
-        <input type="text" id="f-license-note" placeholder="z.B. Eigenes Fahrzeug vorhanden" oninput="render()">
+        <input type="text" id="f-license-note" placeholder="z.B. Eigenes Fahrzeug vorhanden" data-i18n="placeholderLicenseNote" data-i18n-attr="placeholder" oninput="renderDebounced()">
       </div>
       <div class="form-group">
-        <label>Position im Lebenslauf</label>
+        <label data-i18n="labelPosInCV">Position im Lebenslauf</label>
         <select id="f-license-pos" onchange="render()">
-          <option value="right">➡ Rechts</option>
-          <option value="left">⬅ Links (Seitenleiste)</option>
+          <option value="right" data-i18n="optRight">➡ Rechts</option>
+          <option value="left" data-i18n="optLeft">⬅ Links (Seitenleiste)</option>
         </select>
       </div>
 
@@ -326,28 +275,28 @@
     <div id="panel-extras" class="epanel">
 
       <!-- REFERENZEN -->
-      <div class="section-divider">Referenzen</div>
+      <div class="section-divider" data-i18n="sectionReferenzen">Referenzen</div>
       <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;line-height:1.6;">
-        Füge Kontaktpersonen hinzu, die dich empfehlen können. Diese erscheinen im CV als Karten.
+        <span data-i18n="refTip">Fügen Sie Kontaktpersonen hinzu, die Sie empfehlen können. Diese erscheinen im CV als Karten.</span>
       </div>
       <div id="ref-list"></div>
-      <button class="btn-add" onclick="addRef()">+ Referenz hinzufügen</button>
+      <button class="btn-add" onclick="addRef()" data-i18n="btnAddRef">+ Referenz hinzufügen</button>
 
       <!-- ZERTIFIKATE & KURSE -->
-      <div class="section-divider" style="margin-top:1.5rem;">Zertifikate &amp; Kurse</div>
-      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;line-height:1.6;">
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionZertifikate">Zertifikate &amp; Kurse</div>
+      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;line-height:1.6;" data-i18n="hintZertifikate">
         Online-Kurse, Zertifizierungen, Schulungen — mit optionalem Link zum Zertifikat.
       </div>
       <div id="cert-list"></div>
-      <button class="btn-add" onclick="addCert()">+ Zertifikat hinzufügen</button>
+      <button class="btn-add" onclick="addCert()" data-i18n="btnAddCert">+ Zertifikat hinzufügen</button>
 
       <!-- PROJEKTE -->
-      <div class="section-divider" style="margin-top:1.5rem;">Projekte</div>
-      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;line-height:1.6;">
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionProjekte">Projekte</div>
+      <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;line-height:1.6;" data-i18n="hintProjekte">
         Eigene Projekte, GitHub-Repos, Portfolio-Arbeiten — ideal für IT- und Kreativberufe.
       </div>
       <div id="proj-list"></div>
-      <button class="btn-add" onclick="addProject()">+ Projekt hinzufügen</button>
+      <button class="btn-add" onclick="addProject()" data-i18n="btnAddProject">+ Projekt hinzufügen</button>
 
     </div><!-- end panel-extras -->
 
@@ -356,29 +305,33 @@
 
       <div class="section-divider" data-i18n="sectionColor">Akzentfarbe</div>
       <div class="color-options" id="color-picker"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+        <label style="font-size:10px;font-weight:600;color:var(--ink-faint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0;" data-i18n="labelCustomColor">Eigene Farbe</label>
+        <input type="color" id="f-custom-color" value="#3b4f3a" onchange="setCustomColor(this.value)" style="width:36px;height:28px;border:1px solid var(--g-pale);border-radius:6px;padding:2px;cursor:pointer;">
+      </div>
 
       <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionFont">Schriftart</div>
       <div class="font-options" id="font-picker"></div>
 
       <!-- Globale Schriftgröße -->
-      <div class="section-divider" style="margin-top:1.5rem;">Typografie</div>
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionTypo">Typografie</div>
       <div class="form-group">
-        <label>Globale Schriftgröße: <span id="font-scale-label">100%</span></label>
+        <label><span data-i18n="labelFontScale">Globale Schriftgröße</span>: <span id="font-scale-label">100%</span></label>
         <input type="range" id="f-font-scale" min="80" max="120" value="100" step="2"
                oninput="document.getElementById('font-scale-label').textContent=this.value+'%';render()"
                style="width:100%;accent-color:var(--g-muted);">
       </div>
       <div class="form-group">
-        <label>Zeilenabstand: <span id="line-height-label">1.75</span></label>
+        <label><span data-i18n="labelLineHeight">Zeilenabstand</span>: <span id="line-height-label">1.75</span></label>
         <input type="range" id="f-line-height" min="1.4" max="2.2" value="1.75" step="0.05"
                oninput="document.getElementById('line-height-label').textContent=parseFloat(this.value).toFixed(2);render()"
                style="width:100%;accent-color:var(--g-muted);">
       </div>
       <div class="form-group">
-        <label>Hintergrundfarbe rechte Seite</label>
+        <label data-i18n="labelRightBg">Hintergrundfarbe rechte Seite</label>
         <div style="display:flex;gap:8px;align-items:center;">
           <input type="color" id="f-right-bg" value="#ffffff" onchange="render()" style="width:40px;height:32px;border:1px solid var(--g-pale);border-radius:6px;padding:2px;cursor:pointer;">
-          <button onclick="document.getElementById('f-right-bg').value='#ffffff';render()" style="font-size:11px;border:1px solid var(--g-pale);background:#fff;border-radius:5px;padding:4px 8px;cursor:pointer;">Weiß zurücksetzen</button>
+          <button onclick="document.getElementById('f-right-bg').value='#ffffff';render()" style="font-size:11px;border:1px solid var(--g-pale);background:#fff;border-radius:5px;padding:4px 8px;cursor:pointer;" data-i18n="btnResetWhite">Weiß zurücksetzen</button>
         </div>
       </div>
 
@@ -407,27 +360,27 @@
       </div>
 
       <!-- ABSCHNITTS-REIHENFOLGE -->
-      <div class="section-divider" style="margin-top:1.5rem;">Abschnitts-Reihenfolge</div>
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionOrder">Abschnitts-Reihenfolge</div>
       <div style="font-size:11px;color:var(--ink-faint);margin-bottom:10px;line-height:1.6;">
-        Ziehe die Abschnitte, um ihre Reihenfolge im Lebenslauf zu ändern.
+        <span data-i18n="sectionOrderTip">Ziehen Sie die Abschnitte, um ihre Reihenfolge im Lebenslauf zu ändern.</span>
       </div>
       <div id="section-order-list"></div>
       <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="btn-add" style="margin-top:0;" onclick="resetSectionOrder()">↺ Standard-Reihenfolge</button>
+        <button class="btn-add" style="margin-top:0;" onclick="resetSectionOrder()" data-i18n="btnResetOrder">↺ Standard-Reihenfolge</button>
       </div>
 
       <!-- QR CODE -->
-      <div class="section-divider" style="margin-top:1.5rem;">🔲 QR-Code</div>
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionQR">🔲 QR-Code</div>
 
       <!-- Toggle -->
       <div class="form-group">
-        <label>QR-Code im Lebenslauf anzeigen</label>
+        <label data-i18n="labelQRShow">QR-Code im Lebenslauf anzeigen</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
           <label class="toggle-switch">
             <input type="checkbox" id="qr-in-cv" onchange="generateQR()">
             <span class="toggle-slider"></span>
           </label>
-          <span style="font-size:12px;color:var(--ink-soft);">Im CV einbetten</span>
+          <span style="font-size:12px;color:var(--ink-soft);" data-i18n="spanEmbedInCV">Im CV einbetten</span>
         </div>
       </div>
 
@@ -435,35 +388,35 @@
 
         <!-- Inhalt -->
         <div class="form-group">
-          <label>QR-Inhalt</label>
+          <label data-i18n="labelQRContent">QR-Inhalt</label>
           <select id="qr-content" onchange="generateQR()">
-            <option value="web">🌐 Website-URL</option>
-            <option value="email">✉ E-Mail-Adresse</option>
-            <option value="linkedin">💼 LinkedIn-Profil</option>
-            <option value="custom">✏ Eigener Text / URL</option>
+            <option value="web" data-i18n="optQRWeb">🌐 Website-URL</option>
+            <option value="email" data-i18n="optQREmail">✉ E-Mail-Adresse</option>
+            <option value="linkedin" data-i18n="optQRLinkedIn">💼 LinkedIn-Profil</option>
+            <option value="custom" data-i18n="optQRCustom">✏ Eigener Text / URL</option>
           </select>
         </div>
         <div class="form-group" id="qr-custom-wrap" style="display:none;">
-          <label>Eigener QR-Inhalt</label>
-          <input type="text" id="qr-custom-text" placeholder="https://..." oninput="generateQR()">
+          <label data-i18n="labelQRCustom">Eigener QR-Inhalt</label>
+          <input type="text" id="qr-custom-text" placeholder="https://..." data-i18n="placeholderQRCustomURL" data-i18n-attr="placeholder" oninput="generateQR()">
         </div>
 
         <!-- Fehlerkorrektur -->
         <div class="form-group">
-          <label>Fehlerkorrektur-Level
-            <span style="font-size:10px;color:var(--ink-faint);font-weight:400;"> — höher = robuster, aber dichter</span>
+          <label><span data-i18n="labelECL">Fehlerkorrektur-Level</span>
+            <span style="font-size:10px;color:var(--ink-faint);font-weight:400;" data-i18n="spanECLHint"> — höher = robuster, aber dichter</span>
           </label>
           <select id="qr-ecl" onchange="generateQR()">
-            <option value="L">L — 7% (kleinster Code)</option>
-            <option value="M" selected>M — 15% (empfohlen)</option>
-            <option value="Q">Q — 25% (robust)</option>
-            <option value="H">H — 30% (max. Qualität)</option>
+            <option value="L" data-i18n="optECL_L">L — 7% (kleinster Code)</option>
+            <option value="M" selected data-i18n="optECL_M">M — 15% (empfohlen)</option>
+            <option value="Q" data-i18n="optECL_Q">Q — 25% (robust)</option>
+            <option value="H" data-i18n="optECL_H">H — 30% (max. Qualität)</option>
           </select>
         </div>
 
         <!-- Position & Größe -->
         <div class="form-group">
-          <label>Größe: <span id="qr-size-label">64px</span></label>
+          <label><span data-i18n="labelQRSize">Größe</span>: <span id="qr-size-label">64px</span></label>
           <input type="range" id="qr-size" min="40" max="160" value="64" step="4"
                  oninput="document.getElementById('qr-size-label').textContent=this.value+'px';render()"
                  style="width:100%;accent-color:var(--g-muted);">
@@ -471,13 +424,13 @@
 
         <!-- Freie Positionierung -->
         <div class="form-group">
-          <label>Position — Horizontal: <span id="qr-x-label">4%</span></label>
+          <label><span data-i18n="labelQRPosH">Position — Horizontal</span>: <span id="qr-x-label">4%</span></label>
           <input type="range" id="qr-x" min="-8" max="92" value="4" step="1"
                  oninput="document.getElementById('qr-x-label').textContent=this.value+'%';render()"
                  style="width:100%;accent-color:var(--g-muted);">
         </div>
         <div class="form-group">
-          <label>Position — Vertikal: <span id="qr-y-label">4%</span></label>
+          <label><span data-i18n="labelQRPosV">Position — Vertikal</span>: <span id="qr-y-label">4%</span></label>
           <input type="range" id="qr-y" min="-8" max="92" value="4" step="1"
                  oninput="document.getElementById('qr-y-label').textContent=this.value+'%';render()"
                  style="width:100%;accent-color:var(--g-muted);">
@@ -485,57 +438,57 @@
 
         <!-- Schnell-Positionen -->
         <div class="form-group">
-          <label>Schnell-Position</label>
+          <label data-i18n="labelQRSnap">Schnell-Position</label>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:5px;">
-            <button class="qr-snap-btn" onclick="snapQR(4,4)">↖ Links oben</button>
-            <button class="qr-snap-btn" onclick="snapQR(38,4)">↑ Mitte oben</button>
-            <button class="qr-snap-btn" onclick="snapQR(88,4)">↗ Rechts oben</button>
-            <button class="qr-snap-btn" onclick="snapQR(4,44)">← Links Mitte</button>
-            <button class="qr-snap-btn" onclick="snapQR(38,44)">⊙ Zentriert</button>
-            <button class="qr-snap-btn" onclick="snapQR(88,44)">→ Rechts Mitte</button>
-            <button class="qr-snap-btn" onclick="snapQR(4,86)">↙ Links unten</button>
-            <button class="qr-snap-btn" onclick="snapQR(38,86)">↓ Mitte unten</button>
-            <button class="qr-snap-btn" onclick="snapQR(88,86)">↘ Rechts unten</button>
+            <button class="qr-snap-btn" onclick="snapQR(4,4)" data-i18n="snapTL">↖ Links oben</button>
+            <button class="qr-snap-btn" onclick="snapQR(38,4)" data-i18n="snapTC">↑ Mitte oben</button>
+            <button class="qr-snap-btn" onclick="snapQR(88,4)" data-i18n="snapTR">↗ Rechts oben</button>
+            <button class="qr-snap-btn" onclick="snapQR(4,44)" data-i18n="snapML">← Links Mitte</button>
+            <button class="qr-snap-btn" onclick="snapQR(38,44)" data-i18n="snapMC">⊙ Zentriert</button>
+            <button class="qr-snap-btn" onclick="snapQR(88,44)" data-i18n="snapMR">→ Rechts Mitte</button>
+            <button class="qr-snap-btn" onclick="snapQR(4,86)" data-i18n="snapBL">↙ Links unten</button>
+            <button class="qr-snap-btn" onclick="snapQR(38,86)" data-i18n="snapBC">↓ Mitte unten</button>
+            <button class="qr-snap-btn" onclick="snapQR(88,86)" data-i18n="snapBR">↘ Rechts unten</button>
           </div>
         </div>
-        <div style="font-size:10px;color:var(--ink-faint);margin-top:2px;line-height:1.5;">
-          💡 Du kannst den QR-Code auch direkt im Vorschau-Bereich mit der Maus ziehen.
+        <div style="font-size:10px;color:var(--ink-faint);margin-top:2px;line-height:1.5;" data-i18n="qrDragTip">
+          💡 Sie können den QR-Code auch direkt im Vorschau-Bereich mit der Maus ziehen.
         </div>
 
         <!-- Farben -->
         <div class="form-row">
           <div class="form-group">
-            <label>QR-Farbe</label>
+            <label data-i18n="labelQRColor">QR-Farbe</label>
             <div style="display:flex;gap:6px;align-items:center;">
               <input type="color" id="qr-dark-color" value="#2d3d2c" onchange="generateQR()" style="width:36px;height:30px;border:1px solid var(--g-pale);border-radius:5px;padding:2px;cursor:pointer;">
-              <button onclick="document.getElementById('qr-dark-color').value=state.color;generateQR()" style="font-size:10px;border:1px solid var(--g-pale);background:#fff;border-radius:5px;padding:3px 7px;cursor:pointer;white-space:nowrap;">= Akzentfarbe</button>
+              <button onclick="document.getElementById('qr-dark-color').value=state.color;generateQR()" style="font-size:10px;border:1px solid var(--g-pale);background:#fff;border-radius:5px;padding:3px 7px;cursor:pointer;white-space:nowrap;" data-i18n="btnAccentColor">= Akzentfarbe</button>
             </div>
           </div>
           <div class="form-group">
-            <label>Hintergrundfarbe</label>
+            <label data-i18n="labelQRBg">Hintergrundfarbe</label>
             <div style="display:flex;gap:6px;align-items:center;">
               <input type="color" id="qr-light-color" value="#ffffff" onchange="generateQR()" style="width:36px;height:30px;border:1px solid var(--g-pale);border-radius:5px;padding:2px;cursor:pointer;">
-              <button onclick="document.getElementById('qr-light-color').value='transparent';generateQR()" style="font-size:10px;border:1px solid var(--g-pale);background:#fff;border-radius:5px;padding:3px 7px;cursor:pointer;">Transparent</button>
+              <button onclick="document.getElementById('qr-light-color').value='transparent';generateQR()" style="font-size:10px;border:1px solid var(--g-pale);background:#fff;border-radius:5px;padding:3px 7px;cursor:pointer;" data-i18n="btnTransparent">Transparent</button>
             </div>
           </div>
         </div>
 
         <!-- Rahmen-Stil -->
         <div class="form-group">
-          <label>Rahmen-Stil</label>
+          <label data-i18n="labelQRFrame">Rahmen-Stil</label>
           <div class="qr-frame-options" id="qr-frame-picker">
-            <div class="qr-frame-opt selected" data-frame="none"     onclick="selectQRFrame(this,'none')">     <span class="qr-frame-preview" style="border:none;">▪</span><span>Kein</span></div>
-            <div class="qr-frame-opt"          data-frame="simple"   onclick="selectQRFrame(this,'simple')">   <span class="qr-frame-preview" style="border:2px solid #333;border-radius:0;">▪</span><span>Eckig</span></div>
-            <div class="qr-frame-opt"          data-frame="rounded"  onclick="selectQRFrame(this,'rounded')">  <span class="qr-frame-preview" style="border:2px solid #333;border-radius:8px;">▪</span><span>Abgerundet</span></div>
-            <div class="qr-frame-opt"          data-frame="shadow"   onclick="selectQRFrame(this,'shadow')">   <span class="qr-frame-preview" style="border:1px solid #ccc;box-shadow:2px 2px 0 #bbb;">▪</span><span>Schatten</span></div>
-            <div class="qr-frame-opt"          data-frame="badge"    onclick="selectQRFrame(this,'badge')">    <span class="qr-frame-preview" style="border:2px solid #333;border-radius:8px;background:#f5f5f5;">▪</span><span>Badge</span></div>
-            <div class="qr-frame-opt"          data-frame="colored"  onclick="selectQRFrame(this,'colored')">  <span class="qr-frame-preview qr-colored-prev">▪</span><span>Farbig</span></div>
+            <div class="qr-frame-opt selected" data-frame="none"     onclick="selectQRFrame(this,'none')">     <span class="qr-frame-preview" style="border:none;">▪</span><span data-i18n="optFrameNone">Kein</span></div>
+            <div class="qr-frame-opt"          data-frame="simple"   onclick="selectQRFrame(this,'simple')">   <span class="qr-frame-preview" style="border:2px solid #333;border-radius:0;">▪</span><span data-i18n="optFrameSquare">Eckig</span></div>
+            <div class="qr-frame-opt"          data-frame="rounded"  onclick="selectQRFrame(this,'rounded')">  <span class="qr-frame-preview" style="border:2px solid #333;border-radius:8px;">▪</span><span data-i18n="optFrameRound">Abgerundet</span></div>
+            <div class="qr-frame-opt"          data-frame="shadow"   onclick="selectQRFrame(this,'shadow')">   <span class="qr-frame-preview" style="border:1px solid #ccc;box-shadow:2px 2px 0 #bbb;">▪</span><span data-i18n="optFrameShadow">Schatten</span></div>
+            <div class="qr-frame-opt"          data-frame="badge"    onclick="selectQRFrame(this,'badge')">    <span class="qr-frame-preview" style="border:2px solid #333;border-radius:8px;background:#f5f5f5;">▪</span><span data-i18n="optFrameBadge">Badge</span></div>
+            <div class="qr-frame-opt"          data-frame="colored"  onclick="selectQRFrame(this,'colored')">  <span class="qr-frame-preview qr-colored-prev">▪</span><span data-i18n="optFrameColor">Farbig</span></div>
           </div>
         </div>
 
         <!-- Rahmen-Stärke (wenn Rahmen aktiv) -->
         <div class="form-group" id="qr-border-wrap">
-          <label>Rahmen-Stärke: <span id="qr-border-label">2px</span></label>
+          <label><span data-i18n="labelQRBorderSize">Rahmen-Stärke</span>: <span id="qr-border-label">2px</span></label>
           <input type="range" id="qr-border-size" min="1" max="8" value="2" step="1"
                  oninput="document.getElementById('qr-border-label').textContent=this.value+'px';render()"
                  style="width:100%;accent-color:var(--g-muted);">
@@ -543,55 +496,56 @@
 
         <!-- Beschriftung -->
         <div class="form-group">
-          <label>Beschriftungsposition</label>
+          <label data-i18n="labelQRLabelPos">Beschriftungsposition</label>
           <select id="qr-label-pos" onchange="render()">
-            <option value="none">Keine Beschriftung</option>
-            <option value="below">Unter dem QR-Code</option>
-            <option value="above">Über dem QR-Code</option>
+            <option value="none" data-i18n="optLabelNone">Keine Beschriftung</option>
+            <option value="below" data-i18n="optLabelBelow">Unter dem QR-Code</option>
+            <option value="above" data-i18n="optLabelAbove">Über dem QR-Code</option>
           </select>
         </div>
         <div class="form-group" id="qr-caption-wrap">
-          <label>Beschriftungstext</label>
-          <input type="text" id="qr-caption" placeholder="z.B. Portfolio scannen" oninput="render()" value="">
+          <label data-i18n="labelQRLabelText">Beschriftungstext</label>
+          <input type="text" id="qr-caption" placeholder="z.B. Portfolio scannen" data-i18n="placeholderQRCaption" data-i18n-attr="placeholder" oninput="renderDebounced()" value="">
         </div>
 
       </div><!-- end qr-cv-options -->
 
       <!-- Vorschau & Buttons -->
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-        <button class="btn-add" style="margin-top:0;flex:1;" onclick="generateQR()">🔲 QR generieren</button>
-        <button class="btn-add" style="margin-top:0;flex:1;" onclick="downloadQR()">⬇ PNG herunterladen</button>
+        <button class="btn-add" style="margin-top:0;flex:1;" onclick="generateQR()" data-i18n="btnGenQR">🔲 QR generieren</button>
+        <button class="btn-add" style="margin-top:0;flex:1;" onclick="downloadQR()" data-i18n="btnDownloadPNG">⬇ PNG herunterladen</button>
       </div>
       <div id="qr-output" style="text-align:center;min-height:40px;"></div>
       <span id="qr-url-label" style="font-size:11px;color:var(--ink-faint);text-align:center;display:block;margin-top:6px;word-break:break-all;"></span>
 
       <!-- Tipps -->
       <div style="background:#f0f4ef;border-radius:8px;padding:10px 12px;font-size:11px;color:var(--ink-soft);line-height:1.7;margin-top:10px;">
-        💡 <strong>Tipps:</strong> Höherer ECL-Level → robuster beim Scannen auch wenn der Druck nicht perfekt ist.
-        Verwende <strong>H-Level</strong> wenn du ein Logo in der Mitte einblenden möchtest (kommt bald).
-        Teste den QR immer mit dem Handy bevor du druckst.
+        💡 <strong data-i18n="tipsLabel">Tipps:</strong>
+        <span data-i18n="qrTipEcl">Höherer ECL-Level → robuster beim Scannen, auch wenn der Druck nicht perfekt ist.</span>
+        <span data-i18n="qrTipLogo">Verwenden Sie <strong>H-Level</strong>, wenn Sie ein Logo in der Mitte einblenden möchten (kommt bald).</span>
+        <span data-i18n="qrTipTest">Testen Sie den QR-Code immer mit dem Handy, bevor Sie drucken.</span>
       </div>
 
       <!-- JSON IMPORT / EXPORT -->
-      <div class="section-divider" style="margin-top:1.5rem;">📄 Daten Import / Export</div>
+      <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionImportExport">📄 Daten Import / Export</div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         <div class="import-drop" onclick="triggerImport()" style="padding:12px;">
           <div style="font-size:22px;margin-bottom:4px;">📥</div>
-          <div style="font-size:12px;font-weight:700;color:var(--ink-mid);">JSON importieren</div>
-          <div style="font-size:10px;color:var(--ink-faint);margin-top:2px;">JSON Resume Format</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink-mid);" data-i18n="btnJSONImport">JSON importieren</div>
+          <div style="font-size:10px;color:var(--ink-faint);margin-top:2px;" data-i18n="hintJSONFormat">JSON Resume Format</div>
         </div>
         <div class="import-drop" onclick="exportJSON()" style="padding:12px;">
           <div style="font-size:22px;margin-bottom:4px;">📤</div>
-          <div style="font-size:12px;font-weight:700;color:var(--ink-mid);">JSON exportieren</div>
-          <div style="font-size:10px;color:var(--ink-faint);margin-top:2px;">Backup / Weitergabe</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink-mid);" data-i18n="btnJSONExport">JSON exportieren</div>
+          <div style="font-size:10px;color:var(--ink-faint);margin-top:2px;" data-i18n="hintBackup">Backup / Weitergabe</div>
         </div>
       </div>
 
       <div style="background:#f0f4ef;border-radius:8px;padding:10px 12px;font-size:11px;color:var(--ink-soft);line-height:1.7;">
-        <strong>Import:</strong> JSON Resume Standard (jsonresume.org)<br>
-        <strong>Export:</strong> Speichert alle deine Daten als JSON-Datei — ideal als Backup oder zum Übertragen auf ein anderes Gerät.<br>
-        <strong>LinkedIn:</strong> Einstellungen → Datenschutz → Daten abrufen → JSON exportieren
+        <strong data-i18n="labelImport">Import:</strong> <span data-i18n="importHint">JSON Resume Standard (jsonresume.org)</span><br>
+        <strong data-i18n="labelExport">Export:</strong> <span data-i18n="exportHint">Speichert alle Ihre Daten als JSON-Datei — ideal als Backup oder zum Übertragen auf ein anderes Gerät.</span><br>
+        <strong>LinkedIn:</strong> <span data-i18n="linkedinHint">Einstellungen → Datenschutz → Daten abrufen → JSON exportieren</span>
       </div>
 
     </div><!-- end panel-design -->
@@ -600,11 +554,11 @@
     <div id="panel-page2" class="epanel">
       <div class="section-divider" data-i18n="sectionPage2">Seite 2 — Zusatzinhalt</div>
       <div style="font-size:11px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;" data-i18n="page2Info">
-        Füge hier eine zweite Seite hinzu — z.B. Projekte, Zertifikate oder ein Anschreiben.
+        Fügen Sie hier eine zweite Seite hinzu — z.B. Projekte, Zertifikate oder ein Anschreiben.
       </div>
       <div class="form-group">
         <label data-i18n="labelP2Title">Abschnittstitel</label>
-        <input type="text" id="p2-title" placeholder="Projekte &amp; Portfolio" oninput="render()">
+        <input type="text" id="p2-title" placeholder="Projekte &amp; Portfolio" data-i18n="placeholderP2Title" data-i18n-attr="placeholder" oninput="renderDebounced()">
       </div>
       <div id="p2-entries-list"></div>
       <button class="btn-add" onclick="addPage2Entry()" data-i18n="btnAddP2Entry">+ Eintrag hinzufügen</button>
@@ -612,7 +566,7 @@
       <div class="section-divider" style="margin-top:1.5rem;" data-i18n="sectionFreetext">Freitext</div>
       <div class="form-group">
         <label data-i18n="labelFreetext">Zusätzlicher Text</label>
-        <textarea id="p2-freetext" rows="4" placeholder="z.B. Ich freue mich über Ihre Einladung..." oninput="render()"></textarea>
+        <textarea id="p2-freetext" rows="4" placeholder="z.B. Ich freue mich über Ihre Einladung..." data-i18n="placeholderFreetext" data-i18n-attr="placeholder" oninput="renderDebounced()"></textarea>
       </div>
     </div>
 
@@ -624,9 +578,9 @@
       <span class="preview-label" data-i18n="previewLabel">Vorschau</span>
       <div style="display:flex;gap:10px;align-items:center;">
         <div class="preview-zoom">
-          <button class="zoom-btn" onclick="changeZoom(-0.1)">−</button>
+          <button class="zoom-btn" onclick="changeZoom(-0.1)" aria-label="Verkleinern">−</button>
           <span id="zoom-label">100%</span>
-          <button class="zoom-btn" onclick="changeZoom(0.1)">+</button>
+          <button class="zoom-btn" onclick="changeZoom(0.1)" aria-label="Vergrößern">+</button>
         </div>
       </div>
     </div>
