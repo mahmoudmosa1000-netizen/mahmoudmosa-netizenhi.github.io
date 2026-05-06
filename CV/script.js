@@ -62,7 +62,6 @@ function init() {
   buildRoleSuggestions();
   loadSaved(); buildDynamicLists();
   applyTranslations(); buildProfilesList();
-  buildRoleSuggestions(); buildSectionOrderUI();
   startAutoSave(); updateProgress(); render();
   initKeyboardShortcuts();
 }
