@@ -349,7 +349,7 @@ const TRANSLATIONS = {
     // ── Persönliche Daten Placeholders ──
     placeholderLinkedIn:     'https://linkedin.com/in/...',
     placeholderQRCaption:    'z.B. Portfolio scannen',
-    defaultSkillSoft:    'Problemlösung',
+    defaultSkillSoft:    'JavaScript',
     roleSuggestions:     'Angehender Fachinformatiker|Softwareentwickler|Webentwickler|Full-Stack Developer|Frontend Developer|Backend Developer|DevOps Engineer|IT-Systemadministrator|Data Analyst|Data Scientist|UX/UI Designer|Grafikdesigner|Projektmanager|Kaufmann für Büromanagement|Mediengestalter|Mechatroniker|Elektriker|Krankenpfleger|Erzieher|Lehrer|Buchhalter|Controller|Marketing Manager|Vertriebsmitarbeiter|Logistiker|Lagerarbeiter|Koch|Verkäufer',
     placeholderQRCustomURL: 'https://...',
     labelImport:         'Import:',
@@ -688,7 +688,7 @@ const TRANSLATIONS = {
     // ── Personal Data Placeholders ──
     placeholderLinkedIn:     'https://linkedin.com/in/...',
     placeholderQRCaption:    'e.g. Scan portfolio',
-    defaultSkillSoft:    'Problem Solving',
+    defaultSkillSoft:    'JavaScript',
     roleSuggestions:     'Software Developer|Web Developer|Full-Stack Developer|Frontend Developer|Backend Developer|DevOps Engineer|IT System Administrator|Data Analyst|Data Scientist|UX/UI Designer|Graphic Designer|Project Manager|Office Manager|Media Designer|Mechatronics Engineer|Electrician|Nurse|Educator|Teacher|Accountant|Controller|Marketing Manager|Sales Representative|Logistics Coordinator|Warehouse Worker|Chef|Retail Assistant',
     placeholderQRCustomURL: 'https://...',
     labelImport:         'Import:',
@@ -1027,7 +1027,7 @@ const TRANSLATIONS = {
     // ── بيانات شخصية — نصوص إدخال تلقائي ──
     placeholderLinkedIn:     'https://linkedin.com/in/...',
     placeholderQRCaption:    'مثال: امسح للاطلاع على معرض الأعمال',
-    defaultSkillSoft:    'حل المشكلات',
+    defaultSkillSoft:    'JavaScript',
     roleSuggestions:     'مطوّر برمجيات|مطوّر ويب|مطوّر Full-Stack|مطوّر Frontend|مطوّر Backend|مهندس DevOps|مدير أنظمة تقنية المعلومات|محلل بيانات|عالم بيانات|مصمم UX/UI|مصمم جرافيك|مدير مشاريع|مسؤول إداري|مصمم وسائط|مهندس ميكاترونيكس|كهربائي|ممرض|مربٍّ|معلم|محاسب|مراقب مالي|مدير تسويق|مندوب مبيعات|منسق لوجستي|عامل مستودع|طاهٍ|بائع تجزئة',
     placeholderQRCustomURL: 'https://...',
     labelImport:         'استيراد:',
@@ -1044,12 +1044,19 @@ function t(key) {
 }
 
 function setLang(lang) {
+  const prevDefault = t('placeholderWebLabel'); // value before switch
   currentLang = lang;
   localStorage.setItem('cvbuilder_lang', lang);
   const isAr = lang === 'ar';
   document.documentElement.setAttribute('dir', isAr ? 'rtl' : 'ltr');
   document.documentElement.setAttribute('lang', lang);
   applyTranslations();
+  // Update webLabel field if it still holds any language's default word
+  const wlEl = document.getElementById('f-web-label');
+  const webDefaults = ['Website', 'الموقع', 'website', 'Website'];
+  if (wlEl && (!wlEl.value || webDefaults.includes(wlEl.value) || wlEl.value === prevDefault)) {
+    wlEl.value = t('placeholderWebLabel');
+  }
   if (typeof buildSectionOrderUI === 'function') buildSectionOrderUI();
   if (typeof buildRoleSuggestions === 'function') buildRoleSuggestions();
   render();
