@@ -91,7 +91,8 @@ const TRANSLATIONS = {
     tClean:   'Clean',
 
     /* Position options */
-    posCorner: 'Ecke oben rechts',
+    posCornerR: 'Ecke oben rechts',
+    posCornerL: 'Ecke oben links',
     posCenter: 'Mittig zentriert',
     posNone:   'Kein Foto anzeigen',
 
@@ -200,7 +201,8 @@ const TRANSLATIONS = {
     tBold:    'Bold',
     tClean:   'Clean',
 
-    posCorner: 'Top right corner',
+    posCornerR: 'Top right corner',
+    posCornerL: 'Top left corner',
     posCenter: 'Centered',
     posNone:   'No photo',
 
@@ -306,7 +308,8 @@ const TRANSLATIONS = {
     tBold:    'جريء',
     tClean:   'نظيف',
 
-    posCorner: 'الزاوية العلوية اليمنى',
+    posCornerR: 'الزاوية العلوية اليمنى',
+    posCornerL: 'الزاوية العلوية اليسرى',
     posCenter: 'في المنتصف',
     posNone:   'بدون صورة',
 
