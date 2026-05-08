@@ -7,7 +7,7 @@
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;600&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- App styles -->
   <link rel="stylesheet" href="style.css">
@@ -43,13 +43,21 @@
       <button class="lang-btn"        data-lang="ar" onclick="applyLang('ar')">🇸🇾عر</button>
     </div>
 
-    <button class="btn-pdf" onclick="downloadPDF()" data-i18n="btnPdf">
+    <!-- SCHRITT 18: Export-Fortschrittsanzeige -->
+    <div class="export-toast" id="export-toast" aria-live="polite"></div>
+
+    <button class="btn-pdf"   onclick="downloadPDF()" data-i18n="btnPdf">
       ⬇ Als PDF speichern
     </button>
 
     <!-- FEATURE #8: PNG-Export -->
     <button class="btn-png" onclick="downloadPNG()" data-i18n="btnPng">
       🖼 Als PNG speichern
+    </button>
+
+    <!-- SCHRITT 16: Drucken -->
+    <button class="btn-print" onclick="printCover()" data-i18n="btnPrint">
+      🖨 Drucken
     </button>
   </div>
 
@@ -114,6 +122,24 @@
     <!-- Personal data -->
     <div class="st" data-i18n="secPersonal">Persönliche Daten</div>
 
+    <!-- SCHRITT 14: Anrede + Titel in einer Zeile -->
+    <div class="fg-row">
+      <div class="fg fg-small">
+        <label data-i18n="lAnrede">Anrede</label>
+        <select id="f-anrede" onchange="renderCover()">
+          <option value=""   data-i18n="anredeNone">—</option>
+          <option value="Herr"  data-i18n="anredeHerr">Herr</option>
+          <option value="Frau"  data-i18n="anredeFrau">Frau</option>
+          <option value="Divers" data-i18n="anredeDivers">Divers</option>
+        </select>
+      </div>
+      <div class="fg fg-small">
+        <label data-i18n="lTitel">Titel (optional)</label>
+        <input type="text" id="f-titel" data-ph="pTitel"
+               placeholder="Dr., M.Sc." oninput="renderCover()">
+      </div>
+    </div>
+
     <div class="fg">
       <label data-i18n="lName">Vollständiger Name</label>
       <input type="text" id="f-name" data-ph="pName"
@@ -139,6 +165,12 @@
       <input type="text" id="f-email" data-ph="pEmail"
              placeholder="name@email.de" oninput="renderCover()">
     </div>
+    <!-- SCHRITT 14: LinkedIn -->
+    <div class="fg">
+      <label data-i18n="lLinkedin">LinkedIn-URL (optional)</label>
+      <input type="text" id="f-linkedin" data-ph="pLinkedin"
+             placeholder="linkedin.com/in/..." oninput="renderCover()">
+    </div>
     <!-- FEATURE #9: Geburtsdatum -->
     <div class="fg">
       <label data-i18n="lDob">Geburtsdatum (optional)</label>
@@ -158,6 +190,12 @@
       <label data-i18n="lCompany">Bei Unternehmen (optional)</label>
       <input type="text" id="f-company" data-ph="pCompany"
              placeholder="z.B. Siemens AG" oninput="renderCover()">
+    </div>
+    <!-- SCHRITT 14: Stellenkennziffer -->
+    <div class="fg">
+      <label data-i18n="lKennziffer">Stellenkennziffer (optional)</label>
+      <input type="text" id="f-kennziffer" data-ph="pKennziffer"
+             placeholder="z.B. REF-2025-042" oninput="renderCover()">
     </div>
     <!-- FEATURE #9: Bewerbungsdatum -->
     <div class="fg">
@@ -291,6 +329,14 @@
 
     <!-- Note -->
     <div style="height:1px;background:rgba(90,122,110,.15);margin:14px 0 10px;"></div>
+
+    <!-- SCHRITT 18: Dateiname -->
+    <div class="fg">
+      <label data-i18n="lFilename">Dateiname (ohne Endung)</label>
+      <input type="text" id="f-filename" data-ph="pFilename"
+             placeholder="Bewerbung_Muster" oninput="saveState()">
+    </div>
+
     <p class="note-txt" data-i18n="lNote">
       Alle Daten bleiben lokal. Kein Server, kein Upload.
     </p>
@@ -311,6 +357,18 @@
        PREVIEW  (right panel)
   ════════════════════════════════════ -->
   <div class="preview-area">
+
+    <!-- SCHRITT 17: Zoom-Regler -->
+    <div class="zoom-bar">
+      <span class="zoom-lbl" data-i18n="lZoom">Zoom</span>
+      <button class="zoom-btn" onclick="changeZoom(-10)">−</button>
+      <input type="range" id="zoom-slider" min="30" max="150" value="100" step="5"
+             oninput="applyZoom(this.value)">
+      <button class="zoom-btn" onclick="changeZoom(+10)">+</button>
+      <span class="zoom-val" id="zoom-val">100%</span>
+      <button class="zoom-btn zoom-reset" onclick="applyZoom(100)" data-i18n="zoomReset">↺</button>
+    </div>
+
     <div id="cover-page" class="t-classic">
       <!-- Rendered by main.js → renderCover() -->
     </div>
