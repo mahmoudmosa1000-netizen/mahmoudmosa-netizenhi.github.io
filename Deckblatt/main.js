@@ -147,18 +147,21 @@ function kennzifferLine() {
 }
 
 /* =================================================
-   RTL-FIX: Foto-Ecke respektiert Schreibrichtung
-   In LTR: position:absolute mit inset-inline-end
-   In RTL:  Foto als Flex-Kind (kein absolute),
-            damit es nicht auf die grüne Linie fällt
+   RTL-FIX + LINKS/RECHTS: Foto-Ecke
+   side = 'r' → rechts (physisch)
+   side = 'l' → links  (physisch)
+   In RTL: Flex-Kind statt absolute (kein Überlaufen
+   auf die grüne Trennlinie)
 ================================================= */
-function cornerStyle(top, end) {
+function cornerStyle(top, end, side = 'r') {
   const isRtl = document.documentElement.dir === 'rtl';
   if (isRtl) {
-    /* RTL: Foto wird Flex-Kind, kein absolute mehr */
     return 'flex-shrink:0;align-self:flex-start;margin-top:4px;';
   }
-  return `position:absolute;top:${top};inset-inline-end:${end};`;
+  if (side === 'l') {
+    return `position:absolute;top:${top};left:${end};`;
+  }
+  return `position:absolute;top:${top};right:${end};`;
 }
 
 /* ── SCHRITT 15: Telefon-Validierung ── */
@@ -437,13 +440,13 @@ function photoEl(opts = {}) {
 
 /* ── Classic ────────────────────────────────── */
 function renderClassic() {
-  const pos     = v('f-pos');
+  const pos     = v('f-pos') || 'corner-r';
   const nameVal = fullName();
   const adr     = `${esc(v('f-street'))}<br>${esc(v('f-city'))}`;
   const jobVal  = esc(v('f-job'))   || esc(T('pJob'));
   const coVal   = v('f-company') ? `<div class="co">${esc(T('cvBei'))} ${esc(v('f-company'))}</div>` : '';
 
-  const cornerBox = pos === 'corner' ? photoEl() : '';
+  const cornerBox = pos.startsWith('corner') ? photoEl() : '';
   const centerBox = pos === 'center' ? `<div style="margin-bottom:26px;">${photoEl({ center: true })}</div>` : '';
 
   const qrEl  = g('qr-on').checked ? `<div class="qr-box" id="qr-target" style="margin-left:auto;flex-shrink:0;"></div>` : '';
@@ -473,7 +476,7 @@ function renderClassic() {
 
 /* ── Header-Band ────────────────────────────── */
 function renderBand() {
-  const pos     = v('f-pos');
+  const pos     = v('f-pos') || 'corner-r';
   const nameVal = fullName();
   const adr     = `${esc(v('f-street'))} · ${esc(v('f-city'))}`;
   const jobVal  = esc(v('f-job'))  || esc(T('pJob'));
@@ -483,8 +486,8 @@ function renderBand() {
   const ph   = Math.round(sz * 1.25);
   const box  = photoEl({ w: sz, h: ph });
 
-  const cornerBox = pos === 'corner'
-    ? `<div style="${cornerStyle('28px','50px')}">${box}</div>` : '';
+  const cornerBox = pos.startsWith('corner')
+    ? `<div style="${cornerStyle('28px','50px', pos === 'corner-l' ? 'l' : 'r')}">${box}</div>` : '';
   const centerBox = pos === 'center'
     ? `<div style="margin-bottom:22px;">${photoEl({ w: Math.round(sz * 1.72), h: Math.round(sz * 1.25 * 1.72), center: true })}</div>` : '';
 
@@ -517,7 +520,7 @@ function renderBand() {
 
 /* ── Sidebar ────────────────────────────────── */
 function renderSidebar() {
-  const pos     = v('f-pos');
+  const pos     = v('f-pos') || 'corner-r';
   const nameVal = fullName();
   const sz      = parseInt(v('f-sz') || '120');
   const br      = v('f-shape') || '50%';
@@ -538,7 +541,7 @@ function renderSidebar() {
   const adEl   = v('f-appdate') ? `<div class="sd-ci" style="margin-top:10px;"><span class="sd-cl">${esc(T('cvAppDate'))}</span><span class="sd-cv">${esc(v('f-appdate'))}</span></div>` : '';
 
   return `<div class="sd">
-      ${pos === 'corner' ? `<div style="margin-bottom:14px;">${sideBox}</div>` : ''}
+      ${pos.startsWith('corner') ? `<div style="margin-bottom:14px;">${sideBox}</div>` : ''}
       <div class="sd-nm">${nameVal}</div>
       <div class="sd-adr">${esc(v('f-street'))}<br>${esc(v('f-city'))}</div>
       <div class="sd-div"></div>
@@ -556,14 +559,14 @@ function renderSidebar() {
 
 /* ── Minimal ────────────────────────────────── */
 function renderMinimal() {
-  const pos     = v('f-pos');
+  const pos     = v('f-pos') || 'corner-r';
   const nameVal = fullName();
   const sz      = parseInt(v('f-sz') || '120');
   const ph2     = Math.round(sz * 1.28);
   const box     = photoEl({ w: sz, h: ph2, bg: '#e8ece8' });
 
-  const cornerBox = pos === 'corner'
-    ? `<div style="${cornerStyle('0','0')}">${box}</div>` : '';
+  const cornerBox = pos.startsWith('corner')
+    ? `<div style="${cornerStyle('0','0', pos === 'corner-l' ? 'l' : 'r')}">${box}</div>` : '';
   const centerBox = pos === 'center'
     ? `<div style="margin-bottom:22px;">${photoEl({ w: Math.round(sz * 1.72), h: Math.round(ph2 * 1.72), bg: '#e8ede8', center: true })}</div>` : '';
 
@@ -600,7 +603,7 @@ function renderMinimal() {
 
 /* ── A: Elegant ─────────────────────────────── */
 function renderElegant() {
-  const pos     = v('f-pos');
+  const pos     = v('f-pos') || 'corner-r';
   const nameVal = esc(v('f-name'))    || esc(T('pName'));
   const jobVal  = esc(v('f-job'))     || esc(T('pJob'));
   const coVal   = v('f-company')
@@ -622,8 +625,8 @@ function renderElegant() {
   const ph2 = Math.round(sz * 1.28);
   const centerBox = pos === 'center'
     ? `<div style="margin-bottom:28px;">${photoEl({ w: Math.round(sz*1.6), h: Math.round(ph2*1.6), bg:'#2a2a3e', darkStroke:true, center:true })}</div>` : '';
-  const cornerBox = pos === 'corner'
-    ? `<div style="${cornerStyle('30px','40px')}">${photoEl({ w:sz, h:ph2, bg:'#2a2a3e', darkStroke:true })}</div>` : '';
+  const cornerBox = pos.startsWith('corner')
+    ? `<div style="${cornerStyle('30px','40px', pos === 'corner-l' ? 'l' : 'r')}">${photoEl({ w:sz, h:ph2, bg:'#2a2a3e', darkStroke:true })}</div>` : '';
 
   return `<div class="eg-wrap">
     <div class="eg-hdr" style="position:relative;">
@@ -647,7 +650,7 @@ function renderElegant() {
 
 /* ── B: Modern ──────────────────────────────── */
 function renderModern() {
-  const pos     = v('f-pos');
+  const pos     = v('f-pos') || 'corner-r';
   const nameVal = fullName();
   const jobVal  = esc(v('f-job'))   || esc(T('pJob'));
   const coVal   = v('f-company')
@@ -674,7 +677,7 @@ function renderModern() {
   return `<div class="mo-wrap">
     <div class="mo-stripe">
       <div class="mo-stripe-top"></div>
-      ${pos === 'corner' ? `<div style="margin:0 auto 16px;">${sidePhoto}</div>` : ''}
+      ${pos.startsWith('corner') ? `<div style="margin:0 auto 16px;">${sidePhoto}</div>` : ''}
       <div class="mo-sname">${nameVal}</div>
       <div class="mo-sadr">${esc(v('f-street'))}<br>${esc(v('f-city'))}</div>
       <div class="mo-sdiv"></div>
@@ -692,7 +695,7 @@ function renderModern() {
 
 /* ── C: Bold ────────────────────────────────── */
 function renderBold() {
-  const pos     = v('f-pos');
+  const pos     = v('f-pos') || 'corner-r';
   const nameVal = fullName();
   const jobVal  = esc(v('f-job'))   || esc(T('pJob'));
   const coVal   = v('f-company')
@@ -700,8 +703,8 @@ function renderBold() {
 
   const sz  = parseInt(v('f-sz') || '120');
   const ph2 = Math.round(sz * 1.28);
-  const cornerBox = pos === 'corner'
-    ? `<div style="${cornerStyle('24px','36px')}">${photoEl({ w:sz, h:ph2, bg:'#333', darkStroke:true })}</div>` : '';
+  const cornerBox = pos.startsWith('corner')
+    ? `<div style="${cornerStyle('24px','36px', pos === 'corner-l' ? 'l' : 'r')}">${photoEl({ w:sz, h:ph2, bg:'#333', darkStroke:true })}</div>` : '';
   const centerBox = pos === 'center'
     ? `<div style="display:flex;justify-content:center;margin-bottom:24px;">${photoEl({ w:Math.round(sz*1.6), h:Math.round(ph2*1.6), bg:'#222', darkStroke:true, center:true })}</div>` : '';
 
@@ -737,7 +740,7 @@ function renderBold() {
 
 /* ── D: Clean (professionell / akademisch) ──── */
 function renderClean() {
-  const pos     = v('f-pos');
+  const pos     = v('f-pos') || 'corner-r';
   const nameVal = fullName();
   const jobVal  = esc(v('f-job'))   || esc(T('pJob'));
   const coVal   = v('f-company')
@@ -745,8 +748,8 @@ function renderClean() {
 
   const sz  = parseInt(v('f-sz') || '120');
   const ph2 = Math.round(sz * 1.28);
-  const cornerBox = pos === 'corner'
-    ? `<div style="${cornerStyle('32px','44px')}">${photoEl({ w:sz, h:ph2, bg:'#e8eaed' })}</div>` : '';
+  const cornerBox = pos.startsWith('corner')
+    ? `<div style="${cornerStyle('32px','44px', pos === 'corner-l' ? 'l' : 'r')}">${photoEl({ w:sz, h:ph2, bg:'#e8eaed' })}</div>` : '';
   const centerBox = pos === 'center'
     ? `<div style="display:flex;justify-content:center;margin-bottom:26px;">${photoEl({ w:Math.round(sz*1.6), h:Math.round(ph2*1.6), bg:'#e8eaed', center:true })}</div>` : '';
 
