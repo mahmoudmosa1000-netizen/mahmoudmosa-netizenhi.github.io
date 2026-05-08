@@ -769,3 +769,366 @@ input[type=color].accent-input {
   background: var(--cv-accent);
   border-radius: 50%; flex-shrink: 0;
 }
+
+/* =================================================
+   SCHRITT 14: Neue Felder — Anrede/Titel Zeile,
+   Kennziffer, fg-row Layout
+================================================= */
+.fg-row {
+  display: flex;
+  gap: 10px;
+}
+.fg-row .fg-small {
+  flex: 1;
+  min-width: 0;
+}
+.kz-line {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 10px;
+  letter-spacing: 0.2px;
+}
+.kz-line strong {
+  color: var(--cv-dark);
+  font-weight: 600;
+}
+
+/* =================================================
+   SCHRITT 16: Drucken — Print CSS
+   Editor + Topbar ausblenden, nur Cover drucken
+================================================= */
+.btn-print {
+  background: transparent;
+  color: var(--g-light);
+  border: 1.5px solid var(--g-light);
+  padding: 6px 16px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-print:hover { background: rgba(141,176,138,.18); transform: translateY(-1px); }
+
+@media print {
+  .topbar, .editor, .btn-pdf, .btn-png, .btn-print { display: none !important; }
+  .main    { display: block !important; }
+  .preview-area {
+    background: none !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  #cover-page {
+    transform: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+  }
+}
+
+/* =================================================
+   SCHRITT 17: Zoom-Regler
+================================================= */
+.zoom-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px 14px;
+  margin-bottom: 16px;
+  width: fit-content;
+  align-self: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.zoom-lbl  { font-weight: 600; color: var(--ink-mid); min-width: 34px; }
+.zoom-val  { min-width: 38px; text-align: right; font-weight: 600; color: var(--ink-mid); }
+.zoom-btn  {
+  width: 24px; height: 24px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.zoom-btn:hover    { background: var(--g-pale); border-color: var(--g-muted); }
+.zoom-reset        { font-size: 13px; }
+#zoom-slider       { width: 90px; accent-color: var(--g-muted); cursor: pointer; }
+
+.preview-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* =================================================
+   SCHRITT 18: Export-Toast
+================================================= */
+.export-toast {
+  position: fixed;
+  top: 64px; right: 24px;
+  background: var(--g-dark);
+  color: #fff;
+  font-size: 13px;
+  font-family: 'Source Sans 3', sans-serif;
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 9999;
+  white-space: nowrap;
+}
+.export-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =================================================
+   RTL-FIX: Arabisch — Foto überlappt nicht Name
+   dir=rtl dreht flex-row um → row-reverse korrigiert
+   die logische Reihenfolge (Name links, Foto rechts)
+================================================= */
+
+/* Classic + Band: flex-row umkehren in RTL */
+[dir=rtl] .t-classic .hdr,
+[dir=rtl] .t-band .hdr {
+  flex-direction: row-reverse;
+}
+
+/* Footer-Items in RTL linksbündig halten */
+[dir=rtl] .t-classic .ftr,
+[dir=rtl] .t-band .ftr,
+[dir=rtl] .t-minimal .ftr,
+[dir=rtl] .t-bold .bo-ftr,
+[dir=rtl] .t-clean .cl-ftr,
+[dir=rtl] .t-elegant .eg-ftr {
+  flex-direction: row-reverse;
+}
+
+/* margin-left:auto → margin-right:auto in RTL (Datum/QR rechtsbündig) */
+[dir=rtl] .ci[style*="margin-left:auto"],
+[dir=rtl] .eg-ci[style*="margin-left:auto"],
+[dir=rtl] .bo-ci[style*="margin-left:auto"],
+[dir=rtl] .cl-ci[style*="margin-left:auto"] {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+/* Sidebar + Modern: grid-Spaltenreihenfolge umkehren */
+[dir=rtl] .t-sidebar {
+  direction: rtl;
+}
+[dir=rtl] .t-modern .mo-wrap {
+  direction: rtl;
+}
+
+/* Text-Ausrichtung in RTL-Körpern */
+[dir=rtl] .t-classic .body,
+[dir=rtl] .t-band .body,
+[dir=rtl] .t-minimal .body,
+[dir=rtl] .t-bold .bo-body,
+[dir=rtl] .t-clean .cl-body,
+[dir=rtl] .t-elegant .eg-body {
+  text-align: center; /* bleibt zentriert */
+}
+
+/* Name + Adresse in RTL rechtsbündig */
+[dir=rtl] .t-classic .nm,
+[dir=rtl] .t-classic .adr,
+[dir=rtl] .t-band .nm,
+[dir=rtl] .t-band .adr,
+[dir=rtl] .t-bold .bo-name,
+[dir=rtl] .t-bold .bo-adr,
+[dir=rtl] .t-clean .cl-name,
+[dir=rtl] .t-clean .cl-adr,
+[dir=rtl] .t-elegant .eg-name {
+  text-align: right;
+}
+
+/* Kennziffer-Zeile in RTL */
+[dir=rtl] .kz-line { text-align: right; }
+
+/* =================================================
+   ARABISCH / RTL — TEXT-FIX
+   letter-spacing bricht arabische Ligaturen auf.
+   Dieser Block setzt für ALLE Cover-Elemente in RTL
+   letter-spacing auf 0 zurück und setzt Cairo als
+   Schriftart (unterstützt arabische Glyphen vollständig).
+================================================= */
+[dir=rtl] #cover-page * {
+  letter-spacing: 0 !important;
+  word-spacing: normal !important;
+}
+
+/* Arabische Schriftart für RTL Cover-Seite */
+[dir=rtl] #cover-page {
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif !important;
+  --cv-font: 'Cairo', 'Segoe UI', Arial, sans-serif;
+}
+
+/* text-transform: uppercase hat keine Wirkung auf Arabisch,
+   aber verhindert mögliche Rendering-Artefakte */
+[dir=rtl] #cover-page .lbl,
+[dir=rtl] #cover-page .cv-sec-title,
+[dir=rtl] #cover-page .sd-cl,
+[dir=rtl] #cover-page .mo-lbl,
+[dir=rtl] #cover-page .eg-lbl,
+[dir=rtl] #cover-page .bo-lbl,
+[dir=rtl] #cover-page .cl-lbl {
+  text-transform: none !important;
+}
+
+/* Topbar-Buttons: letter-spacing für alle Sprachen zurücknehmen */
+[dir=rtl] .topbar,
+[dir=rtl] .editor {
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif;
+}
+[dir=rtl] .tlogo,
+[dir=rtl] .tsub,
+[dir=rtl] .st,
+[dir=rtl] label,
+[dir=rtl] .note-txt {
+  letter-spacing: 0;
+}
+
+/* Arabische Texte im Editor rechtsbündig */
+[dir=rtl] .editor input,
+[dir=rtl] .editor select,
+[dir=rtl] .editor textarea {
+  text-align: right;
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif;
+}
+
+/* =================================================
+   ARABISCH — EDITOR UI FIX
+   .tbtn und .chip erben Source Sans 3 welche keine
+   arabischen Glyphen hat → Cairo als Fallback.
+   Betrifft alle Buttons, Chips und Labels im Editor.
+================================================= */
+[dir=rtl] .tbtn,
+[dir=rtl] .chip,
+[dir=rtl] .st,
+[dir=rtl] label,
+[dir=rtl] .fg label,
+[dir=rtl] .note-txt,
+[dir=rtl] .btn-pdf,
+[dir=rtl] .btn-png,
+[dir=rtl] .btn-print,
+[dir=rtl] .btn-reset,
+[dir=rtl] .reset-btn,
+[dir=rtl] .del-btn,
+[dir=rtl] .upload-lbl,
+[dir=rtl] .lang-btn,
+[dir=rtl] .zoom-bar,
+[dir=rtl] .zoom-lbl,
+[dir=rtl] .zoom-val {
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+  word-spacing: normal !important;
+}
+
+/* Theme-Buttons in RTL: Textausrichtung und Schrift */
+[dir=rtl] .tbtn {
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Chip-Text in RTL sauber darstellen */
+[dir=rtl] .chip {
+  font-size: 11px;
+}
+
+/* Topbar-Titel in RTL */
+[dir=rtl] .tlogo span,
+[dir=rtl] .tsub {
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+
+/* =================================================
+   ARABISCH — نظيف / THEMES GRID FIX
+   In RTL sitzt der Button-Text auf der grünen
+   border-bottom Linie des .st-Headers.
+   Fix: mehr Abstand + Text vertikal zentriert.
+================================================= */
+[dir=rtl] .st {
+  text-align: right;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+[dir=rtl] .themes {
+  margin-top: 4px;
+}
+
+[dir=rtl] .tbtn {
+  padding: 11px 8px;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[dir=rtl] .chips {
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+[dir=rtl] .chip {
+  padding: 6px 12px;
+  line-height: 1.4;
+}
+
+/* =================================================
+   RTL-FIX: Eckfoto auf grüner Linie
+   In RTL: absolut positionierte Foto-Ecke wird
+   zum Flex-Kind → kein Überlaufen unter Header.
+   Die Header brauchen dafür display:flex.
+================================================= */
+[dir=rtl] .t-band .hdr,
+[dir=rtl] .t-minimal .hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: static;   /* kein position:relative mehr nötig */
+}
+
+[dir=rtl] .t-elegant .eg-hdr {
+  display: flex;
+  flex-direction: column;   /* Elegant ist zentriert */
+  align-items: center;
+  position: static;
+}
+
+[dir=rtl] .t-bold .bo-hdr,
+[dir=rtl] .t-clean .cl-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: static;
+}
+
+/* Foto-Kind in RTL: linke Seite (logisch: Ende) */
+[dir=rtl] .t-band .hdr > div:last-child,
+[dir=rtl] .t-minimal .hdr > div:last-child,
+[dir=rtl] .t-bold .bo-hdr > div:last-child,
+[dir=rtl] .t-clean .cl-hdr > div:last-child {
+  flex-shrink: 0;
+  margin-right: 0;
+  margin-left: 0;
+}
