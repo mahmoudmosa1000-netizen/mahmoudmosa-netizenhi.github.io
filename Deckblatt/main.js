@@ -118,7 +118,75 @@ function appDateEl() {
     : '';
 }
 
-/* ── FIX #4: E-Mail-Validierung (visuelles Feedback) ── */
+/* =================================================
+   SCHRITT 14: Hilfsfunktionen neue Felder
+================================================= */
+function fullName() {
+  const anrede = v('f-anrede');
+  const titel  = v('f-titel');
+  const name   = v('f-name') || T('pName');
+  return esc([anrede, titel, name].filter(Boolean).join(' '));
+}
+function linkedinLine() {
+  const url = v('f-linkedin');
+  return url
+    ? `<div class="ci"><span class="dot"></span>${esc(T('cvLinkedin'))} ${esc(url)}</div>`
+    : '';
+}
+function linkedinLineSd() {
+  const url = v('f-linkedin');
+  return url
+    ? `<div class="sd-ci"><span class="sd-cl">${esc(T('cvLinkedin'))}</span><span class="sd-cv">${esc(url)}</span></div>`
+    : '';
+}
+function kennzifferLine() {
+  const kz = v('f-kennziffer');
+  return kz
+    ? `<div class="kz-line">${esc(T('cvKennziffer'))} <strong>${esc(kz)}</strong></div>`
+    : '';
+}
+
+/* =================================================
+   RTL-FIX: Foto-Ecke respektiert Schreibrichtung
+   In LTR: position:absolute mit inset-inline-end
+   In RTL:  Foto als Flex-Kind (kein absolute),
+            damit es nicht auf die grüne Linie fällt
+================================================= */
+function cornerStyle(top, end) {
+  const isRtl = document.documentElement.dir === 'rtl';
+  if (isRtl) {
+    /* RTL: Foto wird Flex-Kind, kein absolute mehr */
+    return 'flex-shrink:0;align-self:flex-start;margin-top:4px;';
+  }
+  return `position:absolute;top:${top};inset-inline-end:${end};`;
+}
+
+/* ── SCHRITT 15: Telefon-Validierung ── */
+function validatePhone() {
+  const input = g('f-phone');
+  if (!input) return;
+  const val = input.value.trim();
+  /* Erlaubt: +49 157 ..., 0157..., (030) 123, Leerzeichen, Bindestriche */
+  const valid = val === '' || /^[+\d][\d\s\-().\/]{6,}$/.test(val);
+  input.style.borderColor = valid ? '' : '#c0392b';
+  input.style.background  = valid ? '' : '#fff5f5';
+  let hint = document.getElementById('phone-hint');
+  if (!valid) {
+    if (!hint) {
+      hint = document.createElement('small');
+      hint.id = 'phone-hint';
+      hint.style.cssText = 'color:#c0392b;font-size:11px;margin-top:2px;display:block;';
+      input.parentNode.appendChild(hint);
+    }
+    hint.textContent = currentLang === 'ar'
+      ? 'صيغة رقم الهاتف غير صحيحة'
+      : currentLang === 'en'
+        ? 'Invalid phone number format'
+        : 'Ungültige Telefonnummer';
+  } else if (hint) {
+    hint.remove();
+  }
+}
 function validateEmail() {
   const input = g('f-email');
   if (!input) return;
@@ -155,9 +223,9 @@ function validateEmail() {
 
 /* Alle Felder die gespeichert werden */
 const SAVE_FIELDS = [
-  'f-name','f-street','f-city','f-phone',
-  'f-email','f-dob','f-job','f-company','f-appdate',
-  'f-pos','f-shape','f-sz','f-qr',
+  'f-anrede','f-titel','f-name','f-street','f-city','f-phone',
+  'f-email','f-linkedin','f-dob','f-job','f-company','f-kennziffer','f-appdate',
+  'f-pos','f-shape','f-sz','f-qr','f-filename',
 ];
 const LS_KEY = 'deckblatt_v1';
 
@@ -370,7 +438,7 @@ function photoEl(opts = {}) {
 /* ── Classic ────────────────────────────────── */
 function renderClassic() {
   const pos     = v('f-pos');
-  const nameVal = esc(v('f-name'))  || esc(T('pName'));
+  const nameVal = fullName();
   const adr     = `${esc(v('f-street'))}<br>${esc(v('f-city'))}`;
   const jobVal  = esc(v('f-job'))   || esc(T('pJob'));
   const coVal   = v('f-company') ? `<div class="co">${esc(T('cvBei'))} ${esc(v('f-company'))}</div>` : '';
@@ -397,15 +465,16 @@ function renderClassic() {
       <div class="als">${esc(T('cvAls'))}</div>
       <div class="job">${jobVal}</div>
       ${coVal}
+      ${kennzifferLine()}
     </div>
-    <div class="ftr">${telEl}${emlEl}${appDateEl()}${qrEl}</div>
+    <div class="ftr">${telEl}${emlEl}${linkedinLine()}${appDateEl()}${qrEl}</div>
   </div>`;
 }
 
 /* ── Header-Band ────────────────────────────── */
 function renderBand() {
   const pos     = v('f-pos');
-  const nameVal = esc(v('f-name')) || esc(T('pName'));
+  const nameVal = fullName();
   const adr     = `${esc(v('f-street'))} · ${esc(v('f-city'))}`;
   const jobVal  = esc(v('f-job'))  || esc(T('pJob'));
   const coVal   = v('f-company') ? `<div class="co">${esc(T('cvBei'))} ${esc(v('f-company'))}</div>` : '';
@@ -415,7 +484,7 @@ function renderBand() {
   const box  = photoEl({ w: sz, h: ph });
 
   const cornerBox = pos === 'corner'
-    ? `<div style="position:absolute;top:28px;right:50px;">${box}</div>` : '';
+    ? `<div style="${cornerStyle('28px','50px')}">${box}</div>` : '';
   const centerBox = pos === 'center'
     ? `<div style="margin-bottom:22px;">${photoEl({ w: Math.round(sz * 1.72), h: Math.round(sz * 1.25 * 1.72), center: true })}</div>` : '';
 
@@ -440,15 +509,16 @@ function renderBand() {
       <div class="als">${esc(T('cvAls'))}</div>
       <div class="job">${jobVal}</div>
       ${coVal}
+      ${kennzifferLine()}
     </div>
-    <div class="ftr">${telEl}${emlEl}${appDateEl()}${qrEl}</div>
+    <div class="ftr">${telEl}${emlEl}${linkedinLine()}${appDateEl()}${qrEl}</div>
   </div>`;
 }
 
 /* ── Sidebar ────────────────────────────────── */
 function renderSidebar() {
   const pos     = v('f-pos');
-  const nameVal = esc(v('f-name')) || esc(T('pName'));
+  const nameVal = fullName();
   const sz      = parseInt(v('f-sz') || '120');
   const br      = v('f-shape') || '50%';
   const ph2     = Math.round(sz * (br === '50%' ? 1 : 1.25));
@@ -472,7 +542,7 @@ function renderSidebar() {
       <div class="sd-nm">${nameVal}</div>
       <div class="sd-adr">${esc(v('f-street'))}<br>${esc(v('f-city'))}</div>
       <div class="sd-div"></div>
-      ${telEl}${emlEl}${dobLineSd()}${adEl}${qrEl}
+      ${telEl}${emlEl}${linkedinLineSd()}${dobLineSd()}${adEl}${qrEl}
     </div>
     <div class="mn">
       ${mainBox}
@@ -480,19 +550,20 @@ function renderSidebar() {
       <div class="als">${esc(T('cvAls'))}</div>
       <div class="job">${jobVal}</div>
       ${coVal}
+      ${kennzifferLine()}
     </div>`;
 }
 
 /* ── Minimal ────────────────────────────────── */
 function renderMinimal() {
   const pos     = v('f-pos');
-  const nameVal = esc(v('f-name')) || esc(T('pName'));
+  const nameVal = fullName();
   const sz      = parseInt(v('f-sz') || '120');
   const ph2     = Math.round(sz * 1.28);
   const box     = photoEl({ w: sz, h: ph2, bg: '#e8ece8' });
 
   const cornerBox = pos === 'corner'
-    ? `<div style="position:absolute;top:0;right:0;">${box}</div>` : '';
+    ? `<div style="${cornerStyle('0','0')}">${box}</div>` : '';
   const centerBox = pos === 'center'
     ? `<div style="margin-bottom:22px;">${photoEl({ w: Math.round(sz * 1.72), h: Math.round(ph2 * 1.72), bg: '#e8ede8', center: true })}</div>` : '';
 
@@ -517,8 +588,9 @@ function renderMinimal() {
       <div class="als">${esc(T('cvAls'))}</div>
       <div class="job">${jobVal}</div>
       ${coVal}
+      ${kennzifferLine()}
     </div>
-    <div class="ftr">${telEl}${emlEl}${appDateEl()}${qrEl}</div>
+    <div class="ftr">${telEl}${emlEl}${linkedinLine()}${appDateEl()}${qrEl}</div>
   </div>`;
 }
 
@@ -551,7 +623,7 @@ function renderElegant() {
   const centerBox = pos === 'center'
     ? `<div style="margin-bottom:28px;">${photoEl({ w: Math.round(sz*1.6), h: Math.round(ph2*1.6), bg:'#2a2a3e', darkStroke:true, center:true })}</div>` : '';
   const cornerBox = pos === 'corner'
-    ? `<div style="position:absolute;top:30px;right:40px;">${photoEl({ w:sz, h:ph2, bg:'#2a2a3e', darkStroke:true })}</div>` : '';
+    ? `<div style="${cornerStyle('30px','40px')}">${photoEl({ w:sz, h:ph2, bg:'#2a2a3e', darkStroke:true })}</div>` : '';
 
   return `<div class="eg-wrap">
     <div class="eg-hdr" style="position:relative;">
@@ -568,7 +640,7 @@ function renderElegant() {
       ${coVal}
     </div>
     <div class="eg-ftr">
-      ${adrEl}${dobEl}${telEl}${emlEl}${adEl}${qrEl}
+      ${adrEl}${dobEl}${telEl}${emlEl}${linkedinLine()}${adEl}${qrEl}
     </div>
   </div>`;
 }
@@ -576,7 +648,7 @@ function renderElegant() {
 /* ── B: Modern ──────────────────────────────── */
 function renderModern() {
   const pos     = v('f-pos');
-  const nameVal = esc(v('f-name'))  || esc(T('pName'));
+  const nameVal = fullName();
   const jobVal  = esc(v('f-job'))   || esc(T('pJob'));
   const coVal   = v('f-company')
     ? `<div class="mo-co">${esc(T('cvBei'))} ${esc(v('f-company'))}</div>` : '';
@@ -606,7 +678,7 @@ function renderModern() {
       <div class="mo-sname">${nameVal}</div>
       <div class="mo-sadr">${esc(v('f-street'))}<br>${esc(v('f-city'))}</div>
       <div class="mo-sdiv"></div>
-      ${telEl}${emlEl}${dobEl}${adEl}${qrEl}
+      ${telEl}${emlEl}${linkedinLineSd()}${dobEl}${adEl}${qrEl}
     </div>
     <div class="mo-main">
       ${mainPhoto}
@@ -621,7 +693,7 @@ function renderModern() {
 /* ── C: Bold ────────────────────────────────── */
 function renderBold() {
   const pos     = v('f-pos');
-  const nameVal = esc(v('f-name'))  || esc(T('pName'));
+  const nameVal = fullName();
   const jobVal  = esc(v('f-job'))   || esc(T('pJob'));
   const coVal   = v('f-company')
     ? `<div class="bo-co">${esc(T('cvBei'))} ${esc(v('f-company'))}</div>` : '';
@@ -629,7 +701,7 @@ function renderBold() {
   const sz  = parseInt(v('f-sz') || '120');
   const ph2 = Math.round(sz * 1.28);
   const cornerBox = pos === 'corner'
-    ? `<div style="position:absolute;top:24px;right:36px;">${photoEl({ w:sz, h:ph2, bg:'#333', darkStroke:true })}</div>` : '';
+    ? `<div style="${cornerStyle('24px','36px')}">${photoEl({ w:sz, h:ph2, bg:'#333', darkStroke:true })}</div>` : '';
   const centerBox = pos === 'center'
     ? `<div style="display:flex;justify-content:center;margin-bottom:24px;">${photoEl({ w:Math.round(sz*1.6), h:Math.round(ph2*1.6), bg:'#222', darkStroke:true, center:true })}</div>` : '';
 
@@ -659,14 +731,14 @@ function renderBold() {
       <div class="bo-job">${jobVal}</div>
       ${coVal}
     </div>
-    <div class="bo-ftr">${telEl}${emlEl}${adEl}${qrEl}</div>
+    <div class="bo-ftr">${telEl}${emlEl}${linkedinLine()}${adEl}${qrEl}</div>
   </div>`;
 }
 
 /* ── D: Clean (professionell / akademisch) ──── */
 function renderClean() {
   const pos     = v('f-pos');
-  const nameVal = esc(v('f-name'))  || esc(T('pName'));
+  const nameVal = fullName();
   const jobVal  = esc(v('f-job'))   || esc(T('pJob'));
   const coVal   = v('f-company')
     ? `<div class="cl-co">${esc(T('cvBei'))} ${esc(v('f-company'))}</div>` : '';
@@ -674,7 +746,7 @@ function renderClean() {
   const sz  = parseInt(v('f-sz') || '120');
   const ph2 = Math.round(sz * 1.28);
   const cornerBox = pos === 'corner'
-    ? `<div style="position:absolute;top:32px;right:44px;">${photoEl({ w:sz, h:ph2, bg:'#e8eaed' })}</div>` : '';
+    ? `<div style="${cornerStyle('32px','44px')}">${photoEl({ w:sz, h:ph2, bg:'#e8eaed' })}</div>` : '';
   const centerBox = pos === 'center'
     ? `<div style="display:flex;justify-content:center;margin-bottom:26px;">${photoEl({ w:Math.round(sz*1.6), h:Math.round(ph2*1.6), bg:'#e8eaed', center:true })}</div>` : '';
 
@@ -707,7 +779,7 @@ function renderClean() {
       <div class="cl-job">${jobVal}</div>
       ${coVal}
     </div>
-    <div class="cl-ftr">${telEl}${emlEl}${adEl}${qrEl}</div>
+    <div class="cl-ftr">${telEl}${emlEl}${linkedinLine()}${adEl}${qrEl}</div>
   </div>`;
 }
 
@@ -736,8 +808,9 @@ const THEME_CLASS = {
 };
 
 function renderCover() {
-  validateEmail();                                    /* FIX #4    */
-  saveState();                                        /* FEATURE #6 */
+  validateEmail();
+  validatePhone();                                    /* SCHRITT 15 */
+  saveState();
   const cover = g('cover-page');
   cover.className = THEME_CLASS[theme] || 't-classic';
   cover.innerHTML = (RENDERERS[theme] || renderClassic)();
@@ -787,6 +860,25 @@ function buildQR() {
 }
 
 /* =================================================
+   SCHRITT 18: Dateiname + Fortschrittsanzeige
+================================================= */
+function getFilename(ext) {
+  const custom = v('f-filename').replace(/[^a-zA-Z0-9_\-äöüÄÖÜß]/g, '_');
+  const base   = custom || (v('f-name') || 'Deckblatt').replace(/\s+/g, '_');
+  return `${base}.${ext}`;
+}
+
+let toastTimer = null;
+function showToast(msgKey, durationMs = 2800) {
+  const toast = g('export-toast');
+  if (!toast) return;
+  toast.textContent = T(msgKey);
+  toast.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('visible'), durationMs);
+}
+
+/* ===================================================
    PDF EXPORT
    FIX #2 : try/finally garantiert Sidebar-Reset auch
             bei Fehler. Button-Lock verhindert Doppelklick.
@@ -795,54 +887,82 @@ function buildQR() {
 async function downloadPDF() {
   const cover  = g('cover-page');
   const pdfBtn = document.querySelector('.btn-pdf');
-
-  /* Button sperren (Doppelklick-Schutz) */
   if (pdfBtn) { pdfBtn.disabled = true; pdfBtn.style.opacity = '0.6'; }
-
+  showToast('toastPdf', 8000);
   try {
     const canvas = await buildCoverCanvas(cover);
-
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     pdf.addImage(canvas.toDataURL('image/jpeg', 0.97), 'JPEG', 0, 0, 210, 297);
-
-    const filename = (v('f-name') || 'Deckblatt').replace(/\s+/g, '_') + '_Bewerbung.pdf';
-    pdf.save(filename);
-
+    pdf.save(getFilename('pdf'));
+    showToast('toastDone', 2000);
   } catch (err) {
     alert('PDF-Fehler: ' + err.message);
-
   } finally {
     if (pdfBtn) { pdfBtn.disabled = false; pdfBtn.style.opacity = ''; }
   }
 }
 
 /* =================================================
-   FEATURE #10: Mobile Vorschau-Zoom
-   Skaliert #cover-page so dass es immer in den
-   verfuegbaren Bereich der .preview-area passt.
+   SCHRITT 16: Drucken
+   Öffnet nur das Cover im Druckdialog, Editor
+   wird per Print-CSS ausgeblendet.
+================================================= */
+function printCover() {
+  window.print();
+}
+/* =================================================
+   SCHRITT 17: Manueller Zoom-Regler
+================================================= */
+let manualZoom = null;
+
+function applyZoom(val) {
+  val = Math.min(150, Math.max(30, parseInt(val)));
+  manualZoom = val;
+  const slider = g('zoom-slider');
+  const label  = g('zoom-val');
+  if (slider) slider.value = val;
+  if (label)  label.textContent = val + '%';
+  const cover = g('cover-page');
+  if (cover) {
+    cover.style.transform    = `scale(${val / 100})`;
+    cover.style.marginBottom = `${Math.round(842 * (val / 100 - 1))}px`;
+  }
+}
+
+function changeZoom(delta) {
+  const current = manualZoom !== null
+    ? manualZoom
+    : parseInt(g('zoom-slider')?.value || 100);
+  applyZoom(current + delta);
+}
+
+/* =================================================
+   FEATURE #10: Auto-Zoom (wird übersprungen wenn
+   manualZoom gesetzt ist)
 ================================================= */
 function scalePreview() {
+  if (manualZoom !== null) return;          /* manuell hat Vorrang */
   const cover   = g('cover-page');
   const preview = document.querySelector('.preview-area');
   if (!cover || !preview) return;
 
-  const padding    = 48;                          /* 2rem × 2 */
+  const padding    = 48;
   const available  = preview.clientWidth - padding;
-  const coverWidth = 595;                         /* A4-Breite in px */
+  const coverWidth = 595;
 
   const scale = available < coverWidth
-    ? Math.max(0.3, available / coverWidth)       /* verkleinern */
-    : 1;                                          /* nie vergroessern */
+    ? Math.max(0.3, available / coverWidth)
+    : 1;
 
-  cover.style.transform = scale < 1 ? `scale(${scale.toFixed(3)})` : '';
+  cover.style.transform    = scale < 1 ? `scale(${scale.toFixed(3)})` : '';
+  cover.style.marginBottom = scale < 1 ? `${Math.round(842 * (scale - 1))}px` : '';
 
-  /* preview-area Hoehe anpassen damit kein leerer Platz entsteht */
-  if (scale < 1) {
-    cover.style.marginBottom = `${Math.round(842 * (scale - 1))}px`;
-  } else {
-    cover.style.marginBottom = '';
-  }
+  /* Slider synchronisieren */
+  const slider = g('zoom-slider');
+  const label  = g('zoom-val');
+  if (slider) slider.value = Math.round(scale * 100);
+  if (label)  label.textContent = Math.round(scale * 100) + '%';
 }
 
 /* Bei Fenstergroessen-Aenderung neu berechnen */
@@ -880,23 +1000,17 @@ async function buildCoverCanvas(cover) {
 async function downloadPNG() {
   const cover  = g('cover-page');
   const pngBtn = document.querySelector('.btn-png');
-
-  /* Button sperren (Doppelklick-Schutz) */
   if (pngBtn) { pngBtn.disabled = true; pngBtn.style.opacity = '0.6'; }
-
+  showToast('toastPng', 8000);
   try {
-    const canvas   = await buildCoverCanvas(cover);
-    const filename = (v('f-name') || 'Deckblatt').replace(/\s+/g, '_') + '_Bewerbung.png';
-
-    /* Download via unsichtbaren Link */
+    const canvas  = await buildCoverCanvas(cover);
     const link    = document.createElement('a');
-    link.download = filename;
+    link.download = getFilename('png');
     link.href     = canvas.toDataURL('image/png');
     link.click();
-
+    showToast('toastDone', 2000);
   } catch (err) {
     alert('PNG-Fehler: ' + err.message);
-
   } finally {
     if (pngBtn) { pngBtn.disabled = false; pngBtn.style.opacity = ''; }
   }
