@@ -91,6 +91,10 @@ const TRANSLATIONS = {
     tClean:   'Clean',
 
     /* Position options */
+    lPhotoX:     'Position X:',
+    lPhotoY:     'Position Y:',
+    btnPhotoReset:'↺ Position zurücksetzen',
+    dragHint:     '💡 Foto auf Vorschau ziehen zum freien Positionieren',
     posCornerR: 'Ecke oben rechts',
     posCornerL: 'Ecke oben links',
     posCenter: 'Mittig zentriert',
@@ -201,6 +205,10 @@ const TRANSLATIONS = {
     tBold:    'Bold',
     tClean:   'Clean',
 
+    lPhotoX:     'Position X:',
+    lPhotoY:     'Position Y:',
+    btnPhotoReset:'↺ Reset position',
+    dragHint:     '💡 Drag photo on preview to reposition freely',
     posCornerR: 'Top right corner',
     posCornerL: 'Top left corner',
     posCenter: 'Centered',
@@ -308,6 +316,10 @@ const TRANSLATIONS = {
     tBold:    'جريء',
     tClean:   'نظيف',
 
+    lPhotoX:     'الموضع X:',
+    lPhotoY:     'الموضع Y:',
+    btnPhotoReset:'↺ إعادة تعيين الموضع',
+    dragHint:     '💡 اسحب الصورة على المعاينة لتحديد الموضع',
     posCornerR: 'الزاوية العلوية اليمنى',
     posCornerL: 'الزاوية العلوية اليسرى',
     posCenter: 'في المنتصف',
