@@ -1095,40 +1095,83 @@ input[type=color].accent-input {
 }
 
 /* =================================================
-   RTL-FIX: Eckfoto auf grüner Linie
-   In RTL: absolut positionierte Foto-Ecke wird
-   zum Flex-Kind → kein Überlaufen unter Header.
-   Die Header brauchen dafür display:flex.
+   FOTO-POSITIONS-STEUERUNG
 ================================================= */
-[dir=rtl] .t-band .hdr,
-[dir=rtl] .t-minimal .hdr {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  position: static;   /* kein position:relative mehr nötig */
+.photo-reset-btn {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px 14px;
+  background: transparent;
+  border: 1.5px solid rgba(90,115,88,0.35);
+  border-radius: 7px;
+  color: var(--g-muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.18s;
+}
+.photo-reset-btn:hover {
+  background: rgba(90,115,88,0.08);
+  border-color: var(--g-muted);
 }
 
-[dir=rtl] .t-elegant .eg-hdr {
-  display: flex;
-  flex-direction: column;   /* Elegant ist zentriert */
-  align-items: center;
-  position: static;
+/* Drag-Cursor Feedback auf Cover */
+#cover-page .draggable-photo {
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: opacity 0.1s, outline 0.1s;
+}
+#cover-page .draggable-photo:hover {
+  outline: 2px dashed rgba(90,115,88,0.5);
 }
 
-[dir=rtl] .t-bold .bo-hdr,
-[dir=rtl] .t-clean .cl-hdr {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  position: static;
+/* =================================================
+   EXPORT-FIX: Inhalt bleibt im Rahmen
+   Alle Theme-Wrapper bekommen overflow:hidden
+   damit html2canvas nichts ausserhalb erfasst
+================================================= */
+.t-classic .cf,
+.t-band .cf,
+.t-minimal .cf,
+.t-elegant .eg-wrap,
+.t-modern .mo-wrap,
+.t-bold .bo-wrap,
+.t-clean .cl-wrap,
+#cover-page .sd,
+#cover-page .mn {
+  overflow: hidden;
+  max-width: 595px;
+  box-sizing: border-box;
 }
 
-/* Foto-Kind in RTL: linke Seite (logisch: Ende) */
-[dir=rtl] .t-band .hdr > div:last-child,
-[dir=rtl] .t-minimal .hdr > div:last-child,
-[dir=rtl] .t-bold .bo-hdr > div:last-child,
-[dir=rtl] .t-clean .cl-hdr > div:last-child {
-  flex-shrink: 0;
-  margin-right: 0;
-  margin-left: 0;
+/* Footer nie über Seitenrand hinaus */
+.t-classic .ftr,
+.t-band .ftr,
+.t-minimal .ftr,
+.t-bold .bo-ftr,
+.t-clean .cl-ftr,
+.t-elegant .eg-ftr {
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+/* Body-Bereiche clippen */
+.t-classic .body,
+.t-band .body,
+.t-minimal .body,
+.t-elegant .eg-body,
+.t-bold .bo-body,
+.t-clean .cl-body,
+.t-modern .mo-main {
+  overflow: hidden;
+}
+
+/* Text in engen Containern umbrechen, nicht überlaufen */
+.nm, .adr, .bo-name, .cl-name, .eg-name, .mo-sname,
+.job, .bo-job, .cl-job, .eg-job, .mo-job {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }
