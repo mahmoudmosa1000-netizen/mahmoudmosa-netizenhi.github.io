@@ -1,385 +1,1177 @@
-<!DOCTYPE html>
-<html lang="de" dir="ltr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deckblatt Designer</title>
+/* =====================================================
+   style.css  –  Deckblatt Designer
+   Palette: identical to CV-Builder green system
+   ===================================================== */
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;600&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+/* ── Reset ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  <!-- App styles -->
-  <link rel="stylesheet" href="style.css">
+/* ── Variables (same as CV-Builder) ────────────── */
+:root {
+  --g-dark:    #2d3d2c;   /* darkest green – topbar background    */
+  --g-mid:     #3b4f3a;   /* dark green – sidebar / accents       */
+  --g-muted:   #5a7358;   /* medium green – borders, labels       */
+  --g-light:   #8db08a;   /* light green – highlights             */
+  --g-pale:    #c5d5c2;   /* very light green – dividers          */
+  --g-bg:      #f0f4ef;   /* off-white green – page background    */
+  --white:     #ffffff;
+  --ink:       #1a2419;
+  --ink-mid:   #3a4a39;
+  --ink-soft:  #5c6e5b;
+  --ink-faint: #8a9e89;
+  --red:       #c0392b;
+}
 
-  <!-- Third-party (CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+/* FEATURE #7: Akzentfarbe-Variablen – nur fuer Cover-Seite
+   Standardwerte spiegeln die originalen Gruentoene.
+   JS aendert diese per style.setProperty() */
+/* FEATURE #12: Schriftart-Variable                      */
+#cover-page {
+  --cv-accent: #5a7358;
+  --cv-dark:   #2d3d2c;
+  --cv-font:   'Playfair Display', serif;
+}
 
-  <!-- Translations – must load BEFORE main.js -->
-  <script src="lang.js"></script>
-</head>
-<body>
+html, body {
+  height: 100%;
+  font-family: 'Source Sans 3', sans-serif;
+  background: var(--g-bg);
+  color: var(--ink);
+  font-size: 14px;
+}
+body { display: flex; flex-direction: column; }
 
-<!-- ═══════════════════════════════════════
-     TOP BAR
-═══════════════════════════════════════ -->
-<div class="topbar">
+/* ══════════════════════════════════════════════════
+   TOP BAR  (dark green, like CV-Builder)
+══════════════════════════════════════════════════ */
+.topbar {
+  background: var(--g-dark);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 0 1.5rem;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 10px;
+}
 
-  <div class="topbar-left">
-    <div class="tlogo">
-      <span data-i18n="toolTitle">DECKBLATT</span>
-      <span data-i18n="toolTitleSpan"> DESIGNER</span>
-    </div>
-    <div class="tsub" data-i18n="toolSub">Professionelles Bewerbungsdeckblatt</div>
-  </div>
+.topbar-left { display: flex; flex-direction: column; justify-content: center; }
 
-  <div class="topbar-right">
-    <!-- Language switcher -->
-    <div class="lang-switcher" role="group" aria-label="Language">
-      <button class="lang-btn active" data-lang="de" onclick="applyLang('de')">🇩🇪DE</button>
-      <button class="lang-btn"        data-lang="en" onclick="applyLang('en')">🇬🇧EN</button>
-      <button class="lang-btn"        data-lang="ar" onclick="applyLang('ar')">🇸🇾عر</button>
-    </div>
+.tlogo {
+  font-family: var(--cv-font);
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+.tlogo span { color: var(--g-light); }
 
-    <!-- SCHRITT 18: Export-Fortschrittsanzeige -->
-    <div class="export-toast" id="export-toast" aria-live="polite"></div>
+.tsub {
+  font-size: 10px;
+  color: rgba(255,255,255,.40);
+  margin-top: 1px;
+}
 
-    <button class="btn-pdf"   onclick="downloadPDF()" data-i18n="btnPdf">
-      ⬇ Als PDF speichern
-    </button>
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
-    <!-- FEATURE #8: PNG-Export -->
-    <button class="btn-png" onclick="downloadPNG()" data-i18n="btnPng">
-      🖼 Als PNG speichern
-    </button>
+/* ── Language switcher ──────────────────────────── */
+.lang-switcher { display: flex; gap: 3px; }
 
-    <!-- SCHRITT 16: Drucken -->
-    <button class="btn-print" onclick="printCover()" data-i18n="btnPrint">
-      🖨 Drucken
-    </button>
-  </div>
+.lang-btn {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 4px;
+  color: rgba(255,255,255,.65);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: all .18s;
+  font-family: 'Source Sans 3', sans-serif;
+  letter-spacing: .04em;
+}
+.lang-btn:hover  { background: rgba(255,255,255,.14); color: #fff; }
+.lang-btn.active { background: var(--g-light); border-color: var(--g-light); color: var(--g-dark); }
 
-</div><!-- /topbar -->
+/* ── PDF button ─────────────────────────────────── */
+.btn-pdf {
+  background: var(--g-light);
+  color: var(--g-dark);
+  border: none;
+  padding: 7px 18px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-pdf:hover { background: #a8c9a5; transform: translateY(-1px); }
 
+/* FEATURE #8: PNG-Button – gleiche Form, etwas heller */
+.btn-png {
+  background: transparent;
+  color: var(--g-light);
+  border: 1.5px solid var(--g-light);
+  padding: 6px 16px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-png:hover { background: rgba(141,176,138,.18); transform: translateY(-1px); }
 
-<!-- ═══════════════════════════════════════
-     MAIN
-═══════════════════════════════════════ -->
-<div class="main">
+/* ══════════════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════════════ */
+.main { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
-  <!-- ════════════════════════════════════
-       EDITOR  (left panel)
-  ════════════════════════════════════ -->
-  <aside class="editor">
+/* ══════════════════════════════════════════════════
+   EDITOR PANEL
+══════════════════════════════════════════════════ */
+.editor {
+  width: 340px;
+  flex-shrink: 0;
+  background: var(--white);
+  border-right: 1px solid var(--g-pale);
+  overflow-y: auto;
+  padding: 16px;
+}
+[dir=rtl] .editor {
+  border-right: none;
+  border-left: 1px solid var(--g-pale);
+}
 
-    <!-- Design template -->
-    <div class="st" data-i18n="secTemplate">Design-Vorlage</div>
-    <div class="themes">
-      <button class="tbtn active" data-t="classic"
-        style="background:#dde9e5;color:#3d5c52;"
-        onclick="setTheme('classic',this)"
-        data-i18n="tClassic">Classic</button>
+/* Section titles */
+.st {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: var(--g-muted);
+  padding: 10px 0 8px;
+  margin-top: 6px;
+  border-bottom: 1px solid var(--g-pale);
+  margin-bottom: 12px;
+}
+.st:first-child { margin-top: 0; }
 
-      <button class="tbtn" data-t="band"
-        style="background:#5a7a6e;color:#fff;"
-        onclick="setTheme('band',this)"
-        data-i18n="tBand">Header-Band</button>
+/* Form elements */
+.fg { margin-bottom: 10px; }
 
-      <button class="tbtn" data-t="sidebar"
-        style="background:#3d5c52;color:#fff;"
-        onclick="setTheme('sidebar',this)"
-        data-i18n="tSidebar">Sidebar</button>
+.fg label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
 
-      <button class="tbtn" data-t="minimal"
-        style="background:#f0f5f3;color:#3d5c52;border:1.5px solid #dde9e5;"
-        onclick="setTheme('minimal',this)"
-        data-i18n="tMinimal">Minimal</button>
+.fg input,
+.fg select {
+  width: 100%;
+  border: 1px solid var(--g-pale);
+  border-radius: 6px;
+  padding: 8px 11px;
+  font-size: 13px;
+  font-family: 'Source Sans 3', sans-serif;
+  color: var(--ink);
+  background: var(--white);
+  transition: border-color .18s;
+  outline: none;
+}
+.fg input:focus,
+.fg select:focus  { border-color: var(--g-muted); }
 
-      <!-- SCHRITT 13: 4 neue Themes -->
-      <button class="tbtn" data-t="elegant"
-        style="background:#1a1a2e;color:#c9a84c;"
-        onclick="setTheme('elegant',this)"
-        data-i18n="tElegant">Elegant</button>
+input[type=range] { accent-color: var(--g-muted); width: 100%; }
 
-      <button class="tbtn" data-t="modern"
-        style="background:#2563eb;color:#fff;"
-        onclick="setTheme('modern',this)"
-        data-i18n="tModern">Modern</button>
+/* Theme buttons */
+.themes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
 
-      <button class="tbtn" data-t="bold"
-        style="background:#111;color:#fff;"
-        onclick="setTheme('bold',this)"
-        data-i18n="tBold">Bold</button>
+.tbtn {
+  padding: 10px 6px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all .2s;
+  text-align: center;
+}
+.tbtn.active { border-color: var(--g-muted) !important; }
 
-      <button class="tbtn" data-t="clean"
-        style="background:#f8f8f8;color:#1a1a2e;border:1.5px solid #ccc;"
-        onclick="setTheme('clean',this)"
-        data-i18n="tClean">Clean</button>
-    </div>
+/* Photo upload */
+.upload-lbl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 1.1rem;
+  background: var(--g-bg);
+  border: 2px dashed var(--g-pale);
+  border-radius: 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: all .2s;
+  text-align: center;
+}
+.upload-lbl:hover { border-color: var(--g-muted); background: #e8efe7; }
+#photo-input { display: none; }
 
-    <!-- Personal data -->
-    <div class="st" data-i18n="secPersonal">Persönliche Daten</div>
+/* Photo thumb */
+.thumb-row {
+  display: none;
+  align-items: center;
+  gap: 1rem;
+  background: var(--g-bg);
+  border: 1px solid var(--g-pale);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 10px;
+}
+.thumb-row img {
+  width: 64px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 3px solid var(--g-pale);
+  flex-shrink: 0;
+}
+.thumb-name { font-size: 12px; font-weight: 600; color: var(--ink-mid); margin-bottom: 4px; }
+.thumb-sub  { font-size: 11px; color: var(--ink-faint); }
+.del-btn {
+  margin-top: 8px;
+  border: 1px solid #f5c6c6;
+  background: var(--white);
+  border-radius: 5px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--red);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.del-btn:hover { background: #fff5f5; }
 
-    <!-- SCHRITT 14: Anrede + Titel in einer Zeile -->
-    <div class="fg-row">
-      <div class="fg fg-small">
-        <label data-i18n="lAnrede">Anrede</label>
-        <select id="f-anrede" onchange="renderCover()">
-          <option value=""   data-i18n="anredeNone">—</option>
-          <option value="Herr"  data-i18n="anredeHerr">Herr</option>
-          <option value="Frau"  data-i18n="anredeFrau">Frau</option>
-          <option value="Divers" data-i18n="anredeDivers">Divers</option>
-        </select>
-      </div>
-      <div class="fg fg-small">
-        <label data-i18n="lTitel">Titel (optional)</label>
-        <input type="text" id="f-titel" data-ph="pTitel"
-               placeholder="Dr., M.Sc." oninput="renderCover()">
-      </div>
-    </div>
+/* Frame chips */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
-    <div class="fg">
-      <label data-i18n="lName">Vollständiger Name</label>
-      <input type="text" id="f-name" data-ph="pName"
-             placeholder="Vor- und Nachname" oninput="renderCover()">
-    </div>
-    <div class="fg">
-      <label data-i18n="lStreet">Straße &amp; Hausnummer</label>
-      <input type="text" id="f-street" data-ph="pStreet"
-             placeholder="Musterstraße 12" oninput="renderCover()">
-    </div>
-    <div class="fg">
-      <label data-i18n="lCity">PLZ &amp; Ort</label>
-      <input type="text" id="f-city" data-ph="pCity"
-             placeholder="12345 Musterstadt" oninput="renderCover()">
-    </div>
-    <div class="fg">
-      <label data-i18n="lPhone">Telefon</label>
-      <input type="text" id="f-phone" data-ph="pPhone"
-             placeholder="0157 ..." oninput="renderCover()">
-    </div>
-    <div class="fg">
-      <label data-i18n="lEmail">E-Mail</label>
-      <input type="text" id="f-email" data-ph="pEmail"
-             placeholder="name@email.de" oninput="renderCover()">
-    </div>
-    <!-- SCHRITT 14: LinkedIn -->
-    <div class="fg">
-      <label data-i18n="lLinkedin">LinkedIn-URL (optional)</label>
-      <input type="text" id="f-linkedin" data-ph="pLinkedin"
-             placeholder="linkedin.com/in/..." oninput="renderCover()">
-    </div>
-    <!-- FEATURE #9: Geburtsdatum -->
-    <div class="fg">
-      <label data-i18n="lDob">Geburtsdatum (optional)</label>
-      <input type="text" id="f-dob" data-ph="pDob"
-             placeholder="01.01.1990" oninput="renderCover()">
-    </div>
+.chip {
+  border: 1.5px solid var(--g-pale);
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--ink-faint);
+  background: var(--white);
+  transition: all .18s;
+}
+.chip:hover { border-color: var(--g-muted); color: var(--ink-mid); }
+.chip.on    { border-color: var(--g-muted); background: var(--g-bg); color: var(--g-muted); }
 
-    <!-- Application -->
-    <div class="st" data-i18n="secJob">Bewerbung</div>
+/* QR row */
+.qr-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer; }
+.qr-row input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--g-muted); cursor: pointer; }
+.qr-row span { font-size: 13px; color: var(--ink-mid); }
 
-    <div class="fg">
-      <label data-i18n="lJob">Ich bewerbe mich als</label>
-      <input type="text" id="f-job" data-ph="pJob"
-             placeholder="z.B. Fachinformatiker" oninput="renderCover()">
-    </div>
-    <div class="fg">
-      <label data-i18n="lCompany">Bei Unternehmen (optional)</label>
-      <input type="text" id="f-company" data-ph="pCompany"
-             placeholder="z.B. Siemens AG" oninput="renderCover()">
-    </div>
-    <!-- SCHRITT 14: Stellenkennziffer -->
-    <div class="fg">
-      <label data-i18n="lKennziffer">Stellenkennziffer (optional)</label>
-      <input type="text" id="f-kennziffer" data-ph="pKennziffer"
-             placeholder="z.B. REF-2025-042" oninput="renderCover()">
-    </div>
-    <!-- FEATURE #9: Bewerbungsdatum -->
-    <div class="fg">
-      <label data-i18n="lAppDate">Bewerbungsdatum</label>
-      <input type="text" id="f-appdate" data-ph="pAppDate"
-             placeholder="01.01.2025" oninput="renderCover()">
-    </div>
+/* Note */
+.note-txt {
+  font-size: 11px;
+  color: var(--ink-faint);
+  line-height: 1.7;
+  padding-bottom: 8px;
+}
 
-    <!-- Photo upload -->
-    <div class="st" data-i18n="secPhoto">Bewerbungsfoto</div>
+/* ══════════════════════════════════════════════════
+   PREVIEW AREA
+══════════════════════════════════════════════════ */
+.preview-area {
+  flex: 1;
+  background: #e8e8e8;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  overflow-y: auto;
+  /* FEATURE #10: Platz fuer scale-transform erhalten */
+  overflow-x: hidden;
+}
 
-    <label class="upload-lbl" for="photo-input" id="photo-drop"
-           ondragover="event.preventDefault();this.style.borderColor='var(--sage)'"
-           ondragleave="this.style.borderColor=''"
-           ondrop="handleDrop(event)">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <path d="M21 15l-5-5L5 21"/>
-      </svg>
-      <span data-i18n="btnUpload">📷 Foto hochladen (JPG, PNG, WEBP)</span>
-    </label>
-    <input type="file" id="photo-input" accept="image/*" onchange="loadPhoto(event)">
+/* ══════════════════════════════════════════════════
+   A4 COVER PAGE
+══════════════════════════════════════════════════ */
+#cover-page {
+  width: 595px;
+  height: 842px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 32px rgba(0,0,0,.18);
+  font-family: 'Source Sans 3', sans-serif;
+  /* FEATURE #10: transform-origin oben-mittig damit
+     das Cover beim Skalieren nicht verschwindet */
+  transform-origin: top center;
+  transition: transform 0.2s ease;
+}
 
-    <!-- Thumbnail after upload -->
-    <div class="thumb-row" id="thumb-row">
-      <img id="thumb" src="" alt="Vorschau">
-      <div>
-        <div class="thumb-name" id="thumb-name">—</div>
-        <button class="del-btn" onclick="removePhoto()" data-i18n="btnRemove">
-          🗑 Entfernen
-        </button>
-      </div>
-    </div>
+/* Photo slot */
+.ps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.ps img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    <!-- Photo settings -->
-    <div class="st" data-i18n="secPhotoOpts">Foto-Einstellungen</div>
+.ph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.ph svg  { opacity: .40; }
+.ph span { font-size: 11px; margin-top: 6px; opacity: .45; }
 
-    <div class="fg">
-      <label data-i18n="lPos">Foto-Position</label>
-      <select id="f-pos" onchange="renderCover()">
-        <option value="corner-r" data-i18n="posCornerR">Ecke oben rechts</option>
-        <option value="corner-l" data-i18n="posCornerL">Ecke oben links</option>
-        <option value="center"   data-i18n="posCenter">Mittig zentriert</option>
-        <option value="none"     data-i18n="posNone">Kein Foto anzeigen</option>
-      </select>
-    </div>
+/* QR */
+.qr-box canvas,
+.qr-box img { display: block; }
 
-    <div class="fg">
-      <label data-i18n="lShape">Foto-Form</label>
-      <select id="f-shape" onchange="renderCover()">
-        <option value="0"   data-i18n="shRect">Rechteckig</option>
-        <option value="8px" data-i18n="shRound">Abgerundet</option>
-        <option value="50%" data-i18n="shCircle">Rund (Kreis)</option>
-      </select>
-    </div>
+/* ══════════════════════════════════════════════════
+   THEME: CLASSIC
+══════════════════════════════════════════════════ */
+.t-classic { background: #fff; }
+.t-classic .cf { width: 100%; height: 100%; display: flex; flex-direction: column; }
 
-    <div class="fg">
-      <label>
-        <span data-i18n="lSize">Foto-Größe</span>:
-        <span id="lbl-sz">120px</span>
-      </label>
-      <input type="range" id="f-sz" min="80" max="200" value="120" step="5"
-        oninput="document.getElementById('lbl-sz').textContent=this.value+'px';renderCover()">
-    </div>
+.t-classic .hdr {
+  background: var(--g-pale);
+  height: 230px;
+  padding: 32px 44px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.t-classic .nm  { font-family: var(--cv-font); font-size: 30px; font-weight: 700; color: var(--cv-dark); line-height: 1.1; margin-bottom: 10px; }
+.t-classic .adr { font-size: 12px; color: var(--cv-accent); line-height: 1.75; }
 
-    <!-- FEATURE #11: Foto-Filter -->
-    <div class="st" data-i18n="secFilter">Foto-Filter</div>
-    <div class="chips">
-      <div class="chip on" data-fi="none"  onclick="setFilter('none',this)"  data-i18n="fiNone">Normal</div>
-      <div class="chip"    data-fi="bw"    onclick="setFilter('bw',this)"    data-i18n="fiBw">S/W</div>
-      <div class="chip"    data-fi="sepia" onclick="setFilter('sepia',this)" data-i18n="fiSepia">Sepia</div>
-    </div>
+.t-classic .body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 60px;
+  text-align: center;
+}
+.t-classic .lbl { font-size: 11px; letter-spacing: 5px; text-transform: uppercase; color: var(--cv-accent); margin-bottom: 10px; font-weight: 600; }
+.t-classic .als { font-size: 14px; color: #bbb; margin-bottom: 10px; }
+.t-classic .job { font-family: var(--cv-font); font-size: 36px; font-weight: 700; color: var(--cv-dark); line-height: 1.15; }
+.t-classic .co  { font-size: 13px; color: #aaa; margin-top: 13px; }
 
-    <!-- Frame style -->
-    <div class="st" data-i18n="secFrame">Rahmen-Stil</div>
-    <div class="chips">
-      <div class="chip on"  data-f="none"   onclick="setFrame('none',this)"   data-i18n="frNone">Kein</div>
-      <div class="chip"     data-f="tw"     onclick="setFrame('tw',this)"     data-i18n="frThinW">Dünn Weiß</div>
-      <div class="chip"     data-f="TW"     onclick="setFrame('TW',this)"     data-i18n="frThickW">Dick Weiß</div>
-      <div class="chip"     data-f="sage"   onclick="setFrame('sage',this)"   data-i18n="frSage">Salbei</div>
-      <div class="chip"     data-f="dark"   onclick="setFrame('dark',this)"   data-i18n="frDark">Dunkel</div>
-      <div class="chip"     data-f="shadow" onclick="setFrame('shadow',this)" data-i18n="frShadow">Schatten</div>
-    </div>
+.t-classic .ftr { border-top: 1px solid var(--g-pale); padding: 14px 44px; display: flex; gap: 20px; align-items: center; }
+.t-classic .ci  { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #555; }
+.t-classic .dot { width: 5px; height: 5px; background: var(--cv-accent); border-radius: 50%; flex-shrink: 0; }
 
-    <!-- FEATURE #12: Schriftart -->
-    <div class="st" data-i18n="secFont">Schriftart</div>
-    <div class="chips">
-      <div class="chip on" data-fn="playfair"  onclick="setFont('playfair',this)"  data-i18n="fnPlayfair">Playfair</div>
-      <div class="chip"    data-fn="source"    onclick="setFont('source',this)"    data-i18n="fnSource">Source Sans</div>
-      <div class="chip"    data-fn="cormorant" onclick="setFont('cormorant',this)" data-i18n="fnCormorant">Cormorant</div>
-    </div>
+/* ══════════════════════════════════════════════════
+   THEME: HEADER-BAND
+══════════════════════════════════════════════════ */
+.t-band { background: #fff; }
+.t-band .cf { width: 100%; height: 100%; display: flex; flex-direction: column; }
 
-    <!-- QR Code -->
-    <div class="st" data-i18n="secQr">QR-Code</div>
+.t-band .top-bar { height: 10px; background: var(--cv-accent); }
 
-    <label class="qr-row">
-      <input type="checkbox" id="qr-on" onchange="renderCover()">
-      <span data-i18n="lQrShow">QR-Code anzeigen</span>
-    </label>
+.t-band .hdr { padding: 36px 50px 28px; border-bottom: 1px solid var(--g-pale); position: relative; }
+.t-band .nm  { font-family: var(--cv-font); font-size: 36px; font-weight: 700; color: var(--cv-dark); line-height: 1.05; margin-bottom: 6px; }
+.t-band .adr { font-size: 11.5px; color: var(--ink-soft); line-height: 1.7; }
 
-    <div class="fg">
-      <label data-i18n="lQrUrl">URL / LinkedIn / Portfolio</label>
-      <input type="text" id="f-qr" data-ph="pQr"
-             placeholder="https://linkedin.com/in/..." oninput="renderCover()">
-    </div>
+.t-band .body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 60px; text-align: center; }
+.t-band .lbl  { font-size: 10px; letter-spacing: 6px; text-transform: uppercase; color: var(--cv-accent); font-weight: 600; margin-bottom: 12px; }
+.t-band .rule { width: 36px; height: 1px; background: var(--g-pale); margin: 0 auto 14px; }
+.t-band .als  { font-size: 14px; color: #bbb; margin-bottom: 10px; }
+.t-band .job  { font-family: var(--cv-font); font-size: 38px; font-weight: 700; color: var(--cv-dark); line-height: 1.1; }
+.t-band .co   { font-size: 12px; color: #aaa; margin-top: 13px; letter-spacing: 1px; }
 
-    <!-- FEATURE #7: Akzentfarbe-Picker -->
-    <div class="st" data-i18n="secAccent">Akzentfarbe</div>
-    <div class="color-row" id="swatch-row">
-      <!-- Voreingestellte Farben – JS generiert active-Klasse -->
-      <div class="color-swatch active" data-color="#5a7358" style="background:#5a7358"
-           onclick="setAccent('#5a7358',this)" title="Grün (Standard)"></div>
-      <div class="color-swatch" data-color="#2c5f8a" style="background:#2c5f8a"
-           onclick="setAccent('#2c5f8a',this)" title="Blau"></div>
-      <div class="color-swatch" data-color="#7a3c5c" style="background:#7a3c5c"
-           onclick="setAccent('#7a3c5c',this)" title="Bordeaux"></div>
-      <div class="color-swatch" data-color="#8a6c3a" style="background:#8a6c3a"
-           onclick="setAccent('#8a6c3a',this)" title="Ocker"></div>
-      <div class="color-swatch" data-color="#3a3a3a" style="background:#3a3a3a"
-           onclick="setAccent('#3a3a3a',this)" title="Anthrazit"></div>
-      <div class="color-swatch" data-color="#5c4033" style="background:#5c4033"
-           onclick="setAccent('#5c4033',this)" title="Braun"></div>
-      <!-- Freier Farbwähler -->
-      <div class="color-picker-wrap">
-        <label for="f-accent" data-i18n="lCustomColor">Eigene:</label>
-        <input type="color" id="f-accent" class="accent-input"
-               value="#5a7358" oninput="setAccent(this.value, null)">
-      </div>
-    </div>
+.t-band .ftr { border-top: 2px solid var(--g-pale); padding: 14px 50px; display: flex; gap: 18px; align-items: center; background: var(--g-bg); }
+.t-band .ci  { font-size: 11.5px; color: #555; display: flex; align-items: center; gap: 6px; }
+.t-band .dot { width: 4px; height: 4px; background: var(--cv-accent); border-radius: 50%; }
 
-    <!-- Note -->
-    <div style="height:1px;background:rgba(90,122,110,.15);margin:14px 0 10px;"></div>
+/* ══════════════════════════════════════════════════
+   THEME: SIDEBAR
+══════════════════════════════════════════════════ */
+.t-sidebar {
+  background: #fff;
+  display: grid !important;
+  grid-template-columns: 185px 1fr !important;
+  height: 842px;
+}
+.t-sidebar .sd { background: var(--cv-accent); padding: 40px 18px; display: flex; flex-direction: column; align-items: center; }
+.t-sidebar .sd-nm  { font-family: var(--cv-font); font-size: 15px; font-weight: 700; color: #fff; text-align: center; margin-bottom: 5px; line-height: 1.25; }
+.t-sidebar .sd-adr { font-size: 9.5px; color: rgba(255,255,255,.55); text-align: center; line-height: 1.75; margin-bottom: 18px; }
+.t-sidebar .sd-div { width: 28px; height: 1px; background: rgba(255,255,255,.25); margin: 10px auto 13px; }
+.t-sidebar .sd-ci  { width: 100%; margin-bottom: 9px; }
+.t-sidebar .sd-cl  { font-size: 7.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.40); display: block; margin-bottom: 1px; }
+.t-sidebar .sd-cv  { font-size: 10px; color: rgba(255,255,255,.82); word-break: break-all; line-height: 1.4; }
 
-    <!-- SCHRITT 18: Dateiname -->
-    <div class="fg">
-      <label data-i18n="lFilename">Dateiname (ohne Endung)</label>
-      <input type="text" id="f-filename" data-ph="pFilename"
-             placeholder="Bewerbung_Muster" oninput="saveState()">
-    </div>
+.t-sidebar .mn  { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 38px 36px; text-align: center; }
+.t-sidebar .lbl { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--cv-accent); font-weight: 600; margin-bottom: 12px; }
+.t-sidebar .als { font-size: 14px; color: #bbb; margin-bottom: 9px; }
+.t-sidebar .job { font-family: var(--cv-font); font-size: 32px; font-weight: 700; color: var(--cv-dark); line-height: 1.2; }
+.t-sidebar .co  { font-size: 12px; color: #999; margin-top: 12px; }
 
-    <p class="note-txt" data-i18n="lNote">
-      Alle Daten bleiben lokal. Kein Server, kein Upload.
-    </p>
+/* ══════════════════════════════════════════════════
+   THEME: MINIMAL
+══════════════════════════════════════════════════ */
+.t-minimal { background: #fafaf8; font-family: 'Source Sans 3', serif; }
+.t-minimal .cf { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
 
-    <!-- FEATURE #6: Reset-Button -->
-    <button
-      class="reset-btn"
-      onclick="resetAll()"
-      data-i18n="btnReset"
-      title="Alle Felder leeren">
-      🗑 Alles zurücksetzen
-    </button>
+.t-minimal .acc-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--cv-accent); }
+[dir=rtl] .t-minimal .acc-bar { left: auto; right: 0; }
 
-  </aside><!-- /editor -->
+.t-minimal .hdr { padding: 54px 54px 0 70px; position: relative; }
+[dir=rtl] .t-minimal .hdr { padding: 54px 70px 0 54px; }
 
+.t-minimal .nm  { font-family: var(--cv-font); font-size: 40px; font-weight: 700; color: var(--ink); line-height: 1; margin-bottom: 10px; }
+.t-minimal .adr { font-size: 12px; color: var(--ink-soft); line-height: 1.8; }
 
-  <!-- ════════════════════════════════════
-       PREVIEW  (right panel)
-  ════════════════════════════════════ -->
-  <div class="preview-area">
+.t-minimal .body { flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 0 54px 0 70px; }
+[dir=rtl] .t-minimal .body { padding: 0 70px 0 54px; align-items: flex-end; }
 
-    <!-- SCHRITT 17: Zoom-Regler -->
-    <div class="zoom-bar">
-      <span class="zoom-lbl" data-i18n="lZoom">Zoom</span>
-      <button class="zoom-btn" onclick="changeZoom(-10)">−</button>
-      <input type="range" id="zoom-slider" min="30" max="150" value="100" step="5"
-             oninput="applyZoom(this.value)">
-      <button class="zoom-btn" onclick="changeZoom(+10)">+</button>
-      <span class="zoom-val" id="zoom-val">100%</span>
-      <button class="zoom-btn zoom-reset" onclick="applyZoom(100)" data-i18n="zoomReset">↺</button>
-    </div>
+.t-minimal .rule { width: 46px; height: 1px; background: var(--g-pale); margin-bottom: 22px; }
+.t-minimal .lbl  { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--cv-accent); margin-bottom: 10px; font-weight: 600; }
+.t-minimal .als  { font-size: 14px; color: #bbb; margin-bottom: 6px; }
+.t-minimal .job  { font-family: var(--cv-font); font-size: 40px; font-weight: 700; color: var(--ink); line-height: 1.1; }
+.t-minimal .co   { font-size: 12px; color: var(--ink-soft); margin-top: 14px; letter-spacing: 1px; }
 
-    <div id="cover-page" class="t-classic">
-      <!-- Rendered by main.js → renderCover() -->
-    </div>
-  </div>
+.t-minimal .ftr { border-top: 1px solid var(--g-pale); padding: 14px 54px 14px 70px; display: flex; gap: 22px; align-items: center; }
+[dir=rtl] .t-minimal .ftr { padding: 14px 70px 14px 54px; }
+.t-minimal .ci  { font-size: 11px; color: var(--ink-soft); display: flex; align-items: center; gap: 5px; }
+.t-minimal .dot { width: 3px; height: 3px; background: var(--g-pale); border-radius: 50%; }
 
-</div><!-- /main -->
+/* =================================================
+   FEATURE #6: Reset-Button
+================================================= */
+.reset-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1.5px solid rgba(192, 57, 43, 0.35);
+  border-radius: 7px;
+  color: #c0392b;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.18s, border-color 0.18s;
+}
+.reset-btn:hover {
+  background: rgba(192, 57, 43, 0.07);
+  border-color: rgba(192, 57, 43, 0.65);
+}
 
+/* =================================================
+   FEATURE #7: Akzentfarbe-Picker
+================================================= */
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.color-swatch:hover  { transform: scale(1.18); }
+.color-swatch.active { border-color: var(--ink); }
 
-<!-- App scripts (lang.js loaded in <head>) -->
-<script src="main.js"></script>
+.color-picker-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.color-picker-wrap label {
+  font-size: 11px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+input[type=color].accent-input {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+}
 
-</body>
-</html>
+/* ==================================================
+   SCHRITT 13 — NEUE THEMES
+================================================== */
+
+/* ── A: ELEGANT ──────────────────────────────── */
+.t-elegant { background: #12122a; width:100%; height:100%; position:relative; }
+
+.t-elegant .eg-wrap {
+  width:100%; height:100%;
+  display:flex; flex-direction:column;
+  color:#e8e0d0;
+}
+.t-elegant .eg-hdr {
+  background: #1a1a2e;
+  padding: 44px 52px 32px;
+  text-align: center;
+  border-bottom: 1px solid #c9a84c44;
+  flex-shrink: 0;
+}
+.t-elegant .eg-rule-top {
+  width: 60px; height: 2px;
+  background: #c9a84c;
+  margin: 0 auto 20px;
+}
+.t-elegant .eg-name {
+  font-family: var(--cv-font);
+  font-size: 38px; font-weight: 700;
+  color: #c9a84c; letter-spacing: 2px;
+  line-height: 1.1; margin-bottom: 14px;
+}
+.t-elegant .eg-divider {
+  color: #c9a84c44; font-size: 18px;
+  letter-spacing: 14px; margin-bottom: 12px;
+}
+.t-elegant .eg-lbl {
+  font-size: 10px; letter-spacing: 7px;
+  text-transform: uppercase; color: #c9a84c99;
+  font-weight: 600;
+}
+.t-elegant .eg-body {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding: 28px 60px; text-align:center;
+}
+.t-elegant .eg-als  { font-size:13px; color:#888; margin-bottom:10px; }
+.t-elegant .eg-job  {
+  font-family: var(--cv-font);
+  font-size:34px; font-weight:700;
+  color:#e8e0d0; line-height:1.2;
+}
+.t-elegant .eg-co   { font-size:13px; color:#c9a84c88; margin-top:12px; }
+.t-elegant .eg-ftr  {
+  border-top:1px solid #c9a84c33;
+  padding:14px 44px;
+  display:flex; gap:18px; align-items:center;
+  flex-wrap:wrap;
+}
+.t-elegant .eg-ci   { display:flex; align-items:center; gap:6px; font-size:11px; color:#aaa; }
+.t-elegant .eg-dot  { width:4px; height:4px; background:#c9a84c; border-radius:50%; flex-shrink:0; }
+
+/* ── B: MODERN ───────────────────────────────── */
+.t-modern { background:#fff; width:100%; height:100%; }
+
+.t-modern .mo-wrap {
+  width:100%; height:100%;
+  display:grid;
+  grid-template-columns: 190px 1fr;
+}
+.t-modern .mo-stripe {
+  background: var(--cv-accent);
+  display:flex; flex-direction:column;
+  padding: 36px 22px 24px;
+  color:#fff;
+}
+.t-modern .mo-stripe-top {
+  width:30px; height:3px;
+  background:rgba(255,255,255,0.5);
+  margin-bottom:20px;
+}
+.t-modern .mo-sname {
+  font-family: var(--cv-font);
+  font-size:17px; font-weight:700;
+  color:#fff; line-height:1.25;
+  margin-bottom:6px;
+}
+.t-modern .mo-sadr  { font-size:10.5px; color:rgba(255,255,255,0.75); line-height:1.7; margin-bottom:14px; }
+.t-modern .mo-sdiv  { height:1px; background:rgba(255,255,255,0.25); margin:10px 0; }
+.t-modern .mo-ci    { display:flex; align-items:center; gap:6px; font-size:10.5px; color:rgba(255,255,255,0.85); margin-top:6px; }
+.t-modern .mo-dot   { width:4px; height:4px; background:#fff; border-radius:50%; flex-shrink:0; opacity:0.7; }
+
+.t-modern .mo-main  {
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:32px 44px; text-align:center;
+}
+.t-modern .mo-lbl   { font-size:10px; letter-spacing:6px; text-transform:uppercase; color:var(--cv-accent); font-weight:600; margin-bottom:14px; }
+.t-modern .mo-als   { font-size:13px; color:#bbb; margin-bottom:10px; }
+.t-modern .mo-job   {
+  font-family: var(--cv-font);
+  font-size:34px; font-weight:700;
+  color: var(--cv-dark); line-height:1.15;
+}
+.t-modern .mo-co    { font-size:13px; color:#aaa; margin-top:12px; }
+
+/* ── C: BOLD ─────────────────────────────────── */
+.t-bold { background:#fff; width:100%; height:100%; }
+
+.t-bold .bo-wrap {
+  width:100%; height:100%;
+  display:flex; flex-direction:column;
+}
+.t-bold .bo-hdr {
+  background: #111;
+  padding: 40px 48px 32px;
+  flex-shrink:0;
+}
+.t-bold .bo-name {
+  font-family: var(--cv-font);
+  font-size:44px; font-weight:900;
+  color:#fff; line-height:1.0;
+  margin-bottom:10px; letter-spacing:-1px;
+}
+.t-bold .bo-adr  { font-size:12px; color:#888; letter-spacing:0.5px; }
+
+.t-bold .bo-body {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:28px 60px; text-align:center;
+}
+.t-bold .bo-lbl  {
+  font-size:10px; letter-spacing:7px;
+  text-transform:uppercase;
+  color: var(--cv-accent);
+  font-weight:700; margin-bottom:12px;
+}
+.t-bold .bo-line { width:40px; height:3px; background:#111; margin:0 auto 16px; }
+.t-bold .bo-als  { font-size:13px; color:#bbb; margin-bottom:10px; }
+.t-bold .bo-job  {
+  font-family: var(--cv-font);
+  font-size:40px; font-weight:900;
+  color:#111; line-height:1.1; letter-spacing:-0.5px;
+}
+.t-bold .bo-co   { font-size:13px; color:#aaa; margin-top:12px; }
+
+.t-bold .bo-ftr  {
+  border-top:3px solid #111;
+  padding:14px 44px;
+  display:flex; gap:18px; align-items:center;
+}
+.t-bold .bo-ci   { display:flex; align-items:center; gap:6px; font-size:11px; color:#555; }
+.t-bold .bo-dot  { width:5px; height:5px; background:#111; border-radius:50%; flex-shrink:0; }
+
+/* ── D: CLEAN (professionell / akademisch) ───── */
+.t-clean { background: #ffffff; width:100%; height:100%; }
+
+.t-clean .cl-wrap {
+  width:100%; height:100%;
+  display:flex; flex-direction:column;
+}
+
+/* Schmale Akzentlinie oben — dezent, nicht aufdringlich */
+.t-clean .cl-accent-bar {
+  height: 4px;
+  background: var(--cv-accent);
+  flex-shrink: 0;
+}
+
+.t-clean .cl-hdr {
+  padding: 36px 50px 24px;
+  flex-shrink: 0;
+}
+.t-clean .cl-name {
+  font-family: var(--cv-font);
+  font-size: 34px; font-weight: 700;
+  color: var(--cv-dark);
+  line-height: 1.1; margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+.t-clean .cl-adr {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.7;
+  letter-spacing: 0.2px;
+}
+
+/* Horizontale Trennlinie mit Akzentpunkt */
+.t-clean .cl-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 0 50px;
+  flex-shrink: 0;
+  position: relative;
+}
+.t-clean .cl-divider::before {
+  content: '';
+  position: absolute;
+  left: 0; top: -3px;
+  width: 48px; height: 7px;
+  background: var(--cv-accent);
+  border-radius: 0 4px 4px 0;
+}
+
+.t-clean .cl-body {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 28px 60px; text-align: center;
+}
+.t-clean .cl-lbl {
+  font-size: 10px; letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--cv-accent);
+  font-weight: 700; margin-bottom: 14px;
+}
+.t-clean .cl-als  { font-size: 13px; color: #bbb; margin-bottom: 10px; }
+.t-clean .cl-job  {
+  font-family: var(--cv-font);
+  font-size: 36px; font-weight: 700;
+  color: var(--cv-dark); line-height: 1.15;
+}
+.t-clean .cl-co   { font-size: 13px; color: #aaa; margin-top: 12px; }
+
+.t-clean .cl-ftr  {
+  border-top: 1px solid #e8e8e8;
+  padding: 14px 50px;
+  display: flex; gap: 20px; align-items: center;
+}
+.t-clean .cl-ci   {
+  display: flex; align-items: center;
+  gap: 7px; font-size: 11.5px; color: #555;
+}
+.t-clean .cl-dot  {
+  width: 5px; height: 5px;
+  background: var(--cv-accent);
+  border-radius: 50%; flex-shrink: 0;
+}
+
+/* =================================================
+   SCHRITT 14: Neue Felder — Anrede/Titel Zeile,
+   Kennziffer, fg-row Layout
+================================================= */
+.fg-row {
+  display: flex;
+  gap: 10px;
+}
+.fg-row .fg-small {
+  flex: 1;
+  min-width: 0;
+}
+.kz-line {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 10px;
+  letter-spacing: 0.2px;
+}
+.kz-line strong {
+  color: var(--cv-dark);
+  font-weight: 600;
+}
+
+/* =================================================
+   SCHRITT 16: Drucken — Print CSS
+   Editor + Topbar ausblenden, nur Cover drucken
+================================================= */
+.btn-print {
+  background: transparent;
+  color: var(--g-light);
+  border: 1.5px solid var(--g-light);
+  padding: 6px 16px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-print:hover { background: rgba(141,176,138,.18); transform: translateY(-1px); }
+
+@media print {
+  .topbar, .editor, .btn-pdf, .btn-png, .btn-print { display: none !important; }
+  .main    { display: block !important; }
+  .preview-area {
+    background: none !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  #cover-page {
+    transform: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+  }
+}
+
+/* =================================================
+   SCHRITT 17: Zoom-Regler
+================================================= */
+.zoom-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px 14px;
+  margin-bottom: 16px;
+  width: fit-content;
+  align-self: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.zoom-lbl  { font-weight: 600; color: var(--ink-mid); min-width: 34px; }
+.zoom-val  { min-width: 38px; text-align: right; font-weight: 600; color: var(--ink-mid); }
+.zoom-btn  {
+  width: 24px; height: 24px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.zoom-btn:hover    { background: var(--g-pale); border-color: var(--g-muted); }
+.zoom-reset        { font-size: 13px; }
+#zoom-slider       { width: 90px; accent-color: var(--g-muted); cursor: pointer; }
+
+.preview-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* =================================================
+   SCHRITT 18: Export-Toast
+================================================= */
+.export-toast {
+  position: fixed;
+  top: 64px; right: 24px;
+  background: var(--g-dark);
+  color: #fff;
+  font-size: 13px;
+  font-family: 'Source Sans 3', sans-serif;
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 9999;
+  white-space: nowrap;
+}
+.export-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =================================================
+   RTL-FIX: Arabisch — Foto überlappt nicht Name
+   dir=rtl dreht flex-row um → row-reverse korrigiert
+   die logische Reihenfolge (Name links, Foto rechts)
+================================================= */
+
+/* Classic + Band: flex-row umkehren in RTL */
+[dir=rtl] .t-classic .hdr,
+[dir=rtl] .t-band .hdr {
+  flex-direction: row-reverse;
+}
+
+/* Footer-Items in RTL linksbündig halten */
+[dir=rtl] .t-classic .ftr,
+[dir=rtl] .t-band .ftr,
+[dir=rtl] .t-minimal .ftr,
+[dir=rtl] .t-bold .bo-ftr,
+[dir=rtl] .t-clean .cl-ftr,
+[dir=rtl] .t-elegant .eg-ftr {
+  flex-direction: row-reverse;
+}
+
+/* margin-left:auto → margin-right:auto in RTL (Datum/QR rechtsbündig) */
+[dir=rtl] .ci[style*="margin-left:auto"],
+[dir=rtl] .eg-ci[style*="margin-left:auto"],
+[dir=rtl] .bo-ci[style*="margin-left:auto"],
+[dir=rtl] .cl-ci[style*="margin-left:auto"] {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+/* Sidebar + Modern: grid-Spaltenreihenfolge umkehren */
+[dir=rtl] .t-sidebar {
+  direction: rtl;
+}
+[dir=rtl] .t-modern .mo-wrap {
+  direction: rtl;
+}
+
+/* Text-Ausrichtung in RTL-Körpern */
+[dir=rtl] .t-classic .body,
+[dir=rtl] .t-band .body,
+[dir=rtl] .t-minimal .body,
+[dir=rtl] .t-bold .bo-body,
+[dir=rtl] .t-clean .cl-body,
+[dir=rtl] .t-elegant .eg-body {
+  text-align: center; /* bleibt zentriert */
+}
+
+/* Name + Adresse in RTL rechtsbündig */
+[dir=rtl] .t-classic .nm,
+[dir=rtl] .t-classic .adr,
+[dir=rtl] .t-band .nm,
+[dir=rtl] .t-band .adr,
+[dir=rtl] .t-bold .bo-name,
+[dir=rtl] .t-bold .bo-adr,
+[dir=rtl] .t-clean .cl-name,
+[dir=rtl] .t-clean .cl-adr,
+[dir=rtl] .t-elegant .eg-name {
+  text-align: right;
+}
+
+/* Kennziffer-Zeile in RTL */
+[dir=rtl] .kz-line { text-align: right; }
+
+/* =================================================
+   ARABISCH / RTL — TEXT-FIX
+   letter-spacing bricht arabische Ligaturen auf.
+   Dieser Block setzt für ALLE Cover-Elemente in RTL
+   letter-spacing auf 0 zurück und setzt Cairo als
+   Schriftart (unterstützt arabische Glyphen vollständig).
+================================================= */
+[dir=rtl] #cover-page * {
+  letter-spacing: 0 !important;
+  word-spacing: normal !important;
+}
+
+/* Arabische Schriftart für RTL Cover-Seite */
+[dir=rtl] #cover-page {
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif !important;
+  --cv-font: 'Cairo', 'Segoe UI', Arial, sans-serif;
+}
+
+/* text-transform: uppercase hat keine Wirkung auf Arabisch,
+   aber verhindert mögliche Rendering-Artefakte */
+[dir=rtl] #cover-page .lbl,
+[dir=rtl] #cover-page .cv-sec-title,
+[dir=rtl] #cover-page .sd-cl,
+[dir=rtl] #cover-page .mo-lbl,
+[dir=rtl] #cover-page .eg-lbl,
+[dir=rtl] #cover-page .bo-lbl,
+[dir=rtl] #cover-page .cl-lbl {
+  text-transform: none !important;
+}
+
+/* Topbar-Buttons: letter-spacing für alle Sprachen zurücknehmen */
+[dir=rtl] .topbar,
+[dir=rtl] .editor {
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif;
+}
+[dir=rtl] .tlogo,
+[dir=rtl] .tsub,
+[dir=rtl] .st,
+[dir=rtl] label,
+[dir=rtl] .note-txt {
+  letter-spacing: 0;
+}
+
+/* Arabische Texte im Editor rechtsbündig */
+[dir=rtl] .editor input,
+[dir=rtl] .editor select,
+[dir=rtl] .editor textarea {
+  text-align: right;
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif;
+}
+
+/* =================================================
+   ARABISCH — EDITOR UI FIX
+   .tbtn und .chip erben Source Sans 3 welche keine
+   arabischen Glyphen hat → Cairo als Fallback.
+   Betrifft alle Buttons, Chips und Labels im Editor.
+================================================= */
+[dir=rtl] .tbtn,
+[dir=rtl] .chip,
+[dir=rtl] .st,
+[dir=rtl] label,
+[dir=rtl] .fg label,
+[dir=rtl] .note-txt,
+[dir=rtl] .btn-pdf,
+[dir=rtl] .btn-png,
+[dir=rtl] .btn-print,
+[dir=rtl] .btn-reset,
+[dir=rtl] .reset-btn,
+[dir=rtl] .del-btn,
+[dir=rtl] .upload-lbl,
+[dir=rtl] .lang-btn,
+[dir=rtl] .zoom-bar,
+[dir=rtl] .zoom-lbl,
+[dir=rtl] .zoom-val {
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+  word-spacing: normal !important;
+}
+
+/* Theme-Buttons in RTL: Textausrichtung und Schrift */
+[dir=rtl] .tbtn {
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Chip-Text in RTL sauber darstellen */
+[dir=rtl] .chip {
+  font-size: 11px;
+}
+
+/* Topbar-Titel in RTL */
+[dir=rtl] .tlogo span,
+[dir=rtl] .tsub {
+  font-family: 'Cairo', 'Segoe UI', Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+
+/* =================================================
+   ARABISCH — نظيف / THEMES GRID FIX
+   In RTL sitzt der Button-Text auf der grünen
+   border-bottom Linie des .st-Headers.
+   Fix: mehr Abstand + Text vertikal zentriert.
+================================================= */
+[dir=rtl] .st {
+  text-align: right;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+[dir=rtl] .themes {
+  margin-top: 4px;
+}
+
+[dir=rtl] .tbtn {
+  padding: 11px 8px;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[dir=rtl] .chips {
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+[dir=rtl] .chip {
+  padding: 6px 12px;
+  line-height: 1.4;
+}
+
+/* =================================================
+   FOTO-POSITIONS-STEUERUNG
+================================================= */
+.photo-reset-btn {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px 14px;
+  background: transparent;
+  border: 1.5px solid rgba(90,115,88,0.35);
+  border-radius: 7px;
+  color: var(--g-muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.18s;
+}
+.photo-reset-btn:hover {
+  background: rgba(90,115,88,0.08);
+  border-color: var(--g-muted);
+}
+
+/* Drag-Cursor Feedback auf Cover */
+#cover-page .draggable-photo {
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: opacity 0.1s, outline 0.1s;
+}
+#cover-page .draggable-photo:hover {
+  outline: 2px dashed rgba(90,115,88,0.5);
+}
+
+/* =================================================
+   EXPORT-FIX: Inhalt bleibt im Rahmen
+   Alle Theme-Wrapper bekommen overflow:hidden
+   damit html2canvas nichts ausserhalb erfasst
+================================================= */
+.t-classic .cf,
+.t-band .cf,
+.t-minimal .cf,
+.t-elegant .eg-wrap,
+.t-modern .mo-wrap,
+.t-bold .bo-wrap,
+.t-clean .cl-wrap,
+#cover-page .sd,
+#cover-page .mn {
+  overflow: hidden;
+  max-width: 595px;
+  box-sizing: border-box;
+}
+
+/* Footer nie über Seitenrand hinaus */
+.t-classic .ftr,
+.t-band .ftr,
+.t-minimal .ftr,
+.t-bold .bo-ftr,
+.t-clean .cl-ftr,
+.t-elegant .eg-ftr {
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+/* Body-Bereiche clippen */
+.t-classic .body,
+.t-band .body,
+.t-minimal .body,
+.t-elegant .eg-body,
+.t-bold .bo-body,
+.t-clean .cl-body,
+.t-modern .mo-main {
+  overflow: hidden;
+}
+
+/* Text in engen Containern umbrechen, nicht überlaufen */
+.nm, .adr, .bo-name, .cl-name, .eg-name, .mo-sname,
+.job, .bo-job, .cl-job, .eg-job, .mo-job {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
