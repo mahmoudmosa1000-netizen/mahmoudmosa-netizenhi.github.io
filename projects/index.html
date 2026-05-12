@@ -1,4 +1,4 @@
-<html lang="de" dir="ltr" data-mode="auto" data-color="teal"><head>
+<html lang="de" dir="ltr" data-mode="dark" data-color="teal"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="">
@@ -139,8 +139,38 @@ html[lang="ar"] .hero-title {font-family:'Noto Sans Arabic',sans-serif;letter-sp
 .orb-3{width:380px;height:380px;background:var(--orb3);top:40%;left:40%;animation-duration:var(--dur-orb3);animation-delay:-14s}
 @keyframes orbFloat{0%{transform:translate(0,0) scale(1)}33%{transform:translate(32px,-48px) scale(1.05)}66%{transform:translate(-22px,30px) scale(.96)}100%{transform:translate(0,0) scale(1)}}
 
-.cursor-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:var(--glow-sm);transition:width .2s,background var(--dur-mode) ease}
-.cursor-ring{width:34px;height:34px;border:1.5px solid rgba(var(--accent-rgb),.52);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s}
+.cursor-dot{
+  width:10px;height:10px;background:var(--accent);border-radius:50%;
+  position:fixed;pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 10px rgba(var(--accent-rgb),1),0 0 28px rgba(var(--accent-rgb),.65),0 0 55px rgba(var(--accent-rgb),.3);
+  transition:width .12s,height .12s,background var(--dur-mode) ease,box-shadow var(--dur-mode) ease;
+  mix-blend-mode:screen;
+}
+.cursor-ring{
+  width:40px;height:40px;
+  border:2px solid rgba(var(--accent-rgb),.72);
+  border-radius:50%;position:fixed;pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 12px rgba(var(--accent-rgb),.28),inset 0 0 12px rgba(var(--accent-rgb),.10);
+  transition:width .28s cubic-bezier(.2,1,.4,1),height .28s cubic-bezier(.2,1,.4,1),border-color .28s,box-shadow .28s;
+}
+.cursor-trail{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  position:fixed;pointer-events:none;z-index:9996;
+  transform:translate(-50%,-50%);
+  transition:background var(--dur-mode) ease;
+}
+.cursor-ripple{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:9995;
+  border:2px solid rgba(var(--accent-rgb),.7);
+  transform:translate(-50%,-50%) scale(0);
+  animation:rippleOut .55s ease-out forwards;
+}
+@keyframes rippleOut{
+  0%  {transform:translate(-50%,-50%) scale(0);opacity:.9}
+  100%{transform:translate(-50%,-50%) scale(3.5);opacity:0}
+}
 
 #scroll-prog{position:fixed;top:0;left:0;height:2px;background:var(--accent);width:0%;z-index:999;box-shadow:var(--glow-sm);transition:width .1s linear}
 
@@ -381,13 +411,13 @@ footer a:hover{text-shadow:var(--glow-sm)}
 
 
 </style>
-<style type="text/css"></style></head>
+</head>
 <body>
 
 <div id="scroll-prog" style="width: 0%;"></div>
-<canvas id="starfield" width="1177" height="670"></canvas>
-<div class="cursor-dot" id="cdot" style="left: 1035px; top: 623px;"></div>
-<div class="cursor-ring" id="cring" style="left: 1033.76px; top: 623.417px; width: 52px; height: 52px; border-color: rgba(var(--accent-rgb),.85);"></div>
+<canvas id="starfield" width="1440" height="685"></canvas>
+<div class="cursor-dot" id="cdot" style="left: 1287px; top: 644px; width: 16px; height: 16px;"></div>
+<div class="cursor-ring" id="cring" style="left: 1286.7px; top: 644.003px; width: 58px; height: 58px; border-color: rgba(var(--accent-rgb),.95);"></div>
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 <div class="orb orb-3"></div>
@@ -455,12 +485,12 @@ footer a:hover{text-shadow:var(--glow-sm)}
          Der helle Punkt ist gleichzeitig rechts → bewegt sich NACH UNTEN ↓
        ══════════════════════════════════════════════════════════════ -->
   <div class="yy-anchor" id="yyAnchor">
-    <div class="yy-arm" id="yyArm" style="transform: translate(-53.4577px, calc(-50% - 9.87631px));">
+    <div class="yy-arm" id="yyArm" style="transform: translate(47.8447px, calc(-50% + 20.7153px));">
       <div class="yy-wrap" id="yyWrap">
         <div class="yy-ring-a"></div>
         <div class="yy-ring-b"></div>
 
-        <svg id="yySvg" viewBox="0 0 310 310" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="js" style="transform: perspective(900px) rotate(124740deg) rotateX(8.93799deg) rotateZ(3.99675deg) scale(1.00472);">
+        <svg id="yySvg" viewBox="0 0 310 310" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="js" style="transform: perspective(900px) rotate(7396.37deg) rotateX(-6.05725deg) rotateZ(-1.9307deg) scale(0.988184);">
 
           <g transform="translate(155,155)">
 
@@ -492,7 +522,7 @@ footer a:hover{text-shadow:var(--glow-sm)}
         </svg>
 
         <!-- Partikel werden per JS eingefügt -->
-        <div id="yyPart"><div class="yy-p" style="width: 1.1px; height: 1.1px; left: 50%; top: 50%; margin-left: calc(-0.55px); margin-top: calc(-0.55px); opacity: 0.53; --r: 143px; animation-duration: 22.8s; animation-delay: -4.9s; animation-direction: reverse;"></div><div class="yy-p" style="width: 1.7px; height: 1.7px; left: 50%; top: 50%; margin-left: calc(-0.85px); margin-top: calc(-0.85px); opacity: 0.4; --r: 172px; animation-duration: 30.3s; animation-delay: -10.5s;"></div><div class="yy-p" style="width: 1.6px; height: 1.6px; left: 50%; top: 50%; margin-left: calc(-0.8px); margin-top: calc(-0.8px); opacity: 0.42; --r: 176px; animation-duration: 28.1s; animation-delay: -1.3s;"></div><div class="yy-p" style="width: 3.5px; height: 3.5px; left: 50%; top: 50%; margin-left: calc(-1.75px); margin-top: calc(-1.75px); opacity: 0.62; --r: 191px; animation-duration: 26.2s; animation-delay: -10.8s; animation-direction: reverse;"></div><div class="yy-p" style="width: 2.3px; height: 2.3px; left: 50%; top: 50%; margin-left: calc(-1.15px); margin-top: calc(-1.15px); opacity: 0.62; --r: 144px; animation-duration: 30.2s; animation-delay: -12.6s;"></div><div class="yy-p" style="width: 3.4px; height: 3.4px; left: 50%; top: 50%; margin-left: calc(-1.7px); margin-top: calc(-1.7px); opacity: 0.69; --r: 194px; animation-duration: 29.2s; animation-delay: -11.5s; animation-direction: reverse;"></div><div class="yy-p" style="width: 3.2px; height: 3.2px; left: 50%; top: 50%; margin-left: calc(-1.6px); margin-top: calc(-1.6px); opacity: 0.68; --r: 130px; animation-duration: 16.3s; animation-delay: -15.7s;"></div><div class="yy-p" style="width: 3.4px; height: 3.4px; left: 50%; top: 50%; margin-left: calc(-1.7px); margin-top: calc(-1.7px); opacity: 0.36; --r: 163px; animation-duration: 18.1s; animation-delay: -21.9s; animation-direction: reverse;"></div><div class="yy-p" style="width: 2.6px; height: 2.6px; left: 50%; top: 50%; margin-left: calc(-1.3px); margin-top: calc(-1.3px); opacity: 0.49; --r: 162px; animation-duration: 18.8s; animation-delay: -9.7s;"></div><div class="yy-p" style="width: 2px; height: 2px; left: 50%; top: 50%; margin-left: calc(-1px); margin-top: calc(-1px); opacity: 0.42; --r: 138px; animation-duration: 18.6s; animation-delay: -14.6s; animation-direction: reverse;"></div><div class="yy-p" style="width: 1.4px; height: 1.4px; left: 50%; top: 50%; margin-left: calc(-0.7px); margin-top: calc(-0.7px); opacity: 0.55; --r: 194px; animation-duration: 26.4s; animation-delay: -0.1s;"></div><div class="yy-p" style="width: 3.2px; height: 3.2px; left: 50%; top: 50%; margin-left: calc(-1.6px); margin-top: calc(-1.6px); opacity: 0.47; --r: 180px; animation-duration: 32.7s; animation-delay: -2.2s; animation-direction: reverse;"></div><div class="yy-p" style="width: 2.8px; height: 2.8px; left: 50%; top: 50%; margin-left: calc(-1.4px); margin-top: calc(-1.4px); opacity: 0.27; --r: 166px; animation-duration: 22.8s; animation-delay: -11s; animation-direction: reverse;"></div><div class="yy-p" style="width: 3px; height: 3px; left: 50%; top: 50%; margin-left: calc(-1.5px); margin-top: calc(-1.5px); opacity: 0.62; --r: 179px; animation-duration: 15.4s; animation-delay: -17.7s;"></div><div class="yy-p" style="width: 3.5px; height: 3.5px; left: 50%; top: 50%; margin-left: calc(-1.75px); margin-top: calc(-1.75px); opacity: 0.51; --r: 185px; animation-duration: 35.6s; animation-delay: -3.6s;"></div><div class="yy-p" style="width: 2.1px; height: 2.1px; left: 50%; top: 50%; margin-left: calc(-1.05px); margin-top: calc(-1.05px); opacity: 0.64; --r: 182px; animation-duration: 32.3s; animation-delay: -21.3s; animation-direction: reverse;"></div></div>
+        <div id="yyPart"><div class="yy-p" style="width: 3.3px; height: 3.3px; left: 50%; top: 50%; margin-left: calc(-1.65px); margin-top: calc(-1.65px); opacity: 0.67; --r: 161px; animation-duration: 16.6s; animation-delay: -3.1s; animation-direction: reverse;"></div><div class="yy-p" style="width: 2.9px; height: 2.9px; left: 50%; top: 50%; margin-left: calc(-1.45px); margin-top: calc(-1.45px); opacity: 0.51; --r: 149px; animation-duration: 16.4s; animation-delay: -19.8s;"></div><div class="yy-p" style="width: 1.1px; height: 1.1px; left: 50%; top: 50%; margin-left: calc(-0.55px); margin-top: calc(-0.55px); opacity: 0.24; --r: 169px; animation-duration: 18.2s; animation-delay: -4.9s;"></div><div class="yy-p" style="width: 2.2px; height: 2.2px; left: 50%; top: 50%; margin-left: calc(-1.1px); margin-top: calc(-1.1px); opacity: 0.53; --r: 199px; animation-duration: 29.5s; animation-delay: -12.8s;"></div><div class="yy-p" style="width: 2.3px; height: 2.3px; left: 50%; top: 50%; margin-left: calc(-1.15px); margin-top: calc(-1.15px); opacity: 0.41; --r: 191px; animation-duration: 22.7s; animation-delay: -13.6s;"></div><div class="yy-p" style="width: 1.4px; height: 1.4px; left: 50%; top: 50%; margin-left: calc(-0.7px); margin-top: calc(-0.7px); opacity: 0.28; --r: 172px; animation-duration: 17.1s; animation-delay: -9.2s;"></div><div class="yy-p" style="width: 1.4px; height: 1.4px; left: 50%; top: 50%; margin-left: calc(-0.7px); margin-top: calc(-0.7px); opacity: 0.54; --r: 161px; animation-duration: 25.9s; animation-delay: -20.2s;"></div><div class="yy-p" style="width: 2.7px; height: 2.7px; left: 50%; top: 50%; margin-left: calc(-1.35px); margin-top: calc(-1.35px); opacity: 0.59; --r: 199px; animation-duration: 36.2s; animation-delay: -18.3s; animation-direction: reverse;"></div><div class="yy-p" style="width: 1.3px; height: 1.3px; left: 50%; top: 50%; margin-left: calc(-0.65px); margin-top: calc(-0.65px); opacity: 0.69; --r: 169px; animation-duration: 16.3s; animation-delay: -17.2s; animation-direction: reverse;"></div><div class="yy-p" style="width: 3.5px; height: 3.5px; left: 50%; top: 50%; margin-left: calc(-1.75px); margin-top: calc(-1.75px); opacity: 0.68; --r: 166px; animation-duration: 33.4s; animation-delay: -6.9s; animation-direction: reverse;"></div><div class="yy-p" style="width: 1.8px; height: 1.8px; left: 50%; top: 50%; margin-left: calc(-0.9px); margin-top: calc(-0.9px); opacity: 0.71; --r: 182px; animation-duration: 17s; animation-delay: -10s;"></div><div class="yy-p" style="width: 1.3px; height: 1.3px; left: 50%; top: 50%; margin-left: calc(-0.65px); margin-top: calc(-0.65px); opacity: 0.6; --r: 200px; animation-duration: 21.7s; animation-delay: -9.9s;"></div><div class="yy-p" style="width: 1.7px; height: 1.7px; left: 50%; top: 50%; margin-left: calc(-0.85px); margin-top: calc(-0.85px); opacity: 0.58; --r: 197px; animation-duration: 18.3s; animation-delay: -16.2s; animation-direction: reverse;"></div><div class="yy-p" style="width: 2.9px; height: 2.9px; left: 50%; top: 50%; margin-left: calc(-1.45px); margin-top: calc(-1.45px); opacity: 0.36; --r: 155px; animation-duration: 15.6s; animation-delay: -21s; animation-direction: reverse;"></div><div class="yy-p" style="width: 0.8px; height: 0.8px; left: 50%; top: 50%; margin-left: calc(-0.4px); margin-top: calc(-0.4px); opacity: 0.29; --r: 159px; animation-duration: 29s; animation-delay: -12.1s;"></div><div class="yy-p" style="width: 1.6px; height: 1.6px; left: 50%; top: 50%; margin-left: calc(-0.8px); margin-top: calc(-0.8px); opacity: 0.5; --r: 143px; animation-duration: 18.9s; animation-delay: -15.8s; animation-direction: reverse;"></div></div>
       </div>
     </div>
   </div>
@@ -512,17 +542,17 @@ footer a:hover{text-shadow:var(--glow-sm)}
   <div class="section-header">
     <div class="section-label"><span data-i="section_lbl"></span></div>
   </div>
-  <div class="projects-grid" id="grid"><div class="card-wrap reveal visible"><div class="proj-card" style="--mx: 282.4%; --my: -72.8%;"><p class="proj-num">PROJECT_01</p>
+  <div class="projects-grid" id="grid"><div class="card-wrap reveal visible"><div class="proj-card" style="--mx: 301.8%; --my: -71.0%;"><p class="proj-num">PROJECT_01</p>
          <div class="proj-tags"></div>
          <h2 class="proj-title">Lebenslauf</h2>
          <p class="proj-desc">Erstellen Sie schnell und einfach professionelle Lebensläufe..</p>
          <div class="plat-row"><a href="https://mahmoudmosa1000-netizen.github.io/mahmoudmosa-CVnetizenhi.github.io/" class="plat-btn" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>Hier</a></div>
-         <div class="proj-footer"><span class="proj-year">2026</span><span class="proj-arrow"> →</span></div></div></div><div class="card-wrap reveal visible"><div class="proj-card" style="--mx: 176.7%; --my: -72.8%;"><p class="proj-num">PROJECT_02</p>
+         <div class="proj-footer"><span class="proj-year">2026</span><span class="proj-arrow"> →</span></div></div></div><div class="card-wrap reveal visible"><div class="proj-card" style="--mx: 196.6%; --my: -71.0%;"><p class="proj-num">PROJECT_02</p>
          <div class="proj-tags"></div>
          <h2 class="proj-title">Deckblatt-Designer</h2>
          <p class="proj-desc">Erstellen Sie schnell und einfach professionelle Deckblätter..</p>
          <div class="plat-row"><a href="https://mahmoudmosa1000-netizen.github.io/mahmoudmosa-Deckblatt-netizenhi.github.io/" class="plat-btn" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>Hier</a></div>
-         <div class="proj-footer"><span class="proj-year">2026</span><span class="proj-arrow"> →</span></div></div></div><div class="card-wrap reveal visible"><div class="proj-card" style="--mx: 71.1%; --my: -72.8%;"><p class="proj-num">PROJECT_03</p>
+         <div class="proj-footer"><span class="proj-year">2026</span><span class="proj-arrow"> →</span></div></div></div><div class="card-wrap reveal visible"><div class="proj-card" style="--mx: 91.5%; --my: -71.0%;"><p class="proj-num">PROJECT_03</p>
          <div class="proj-tags"></div>
          <h2 class="proj-title">🔥</h2>
          <p class="proj-desc"></p>
@@ -547,7 +577,7 @@ footer a:hover{text-shadow:var(--glow-sm)}
     · <a href="mailto:"></a>
   </div>
   <!-- ✏ ANPASSEN: Copyright -->
-  <div>© 2026 [محمود الموسى] </div>
+  <div>© 2026 [MAHMOUD AL MOSA]</div>
 </footer>
 
 
@@ -719,14 +749,28 @@ const PROJECTS = [
 ];
 
 /* ═══════════════════════════════════════════════════════════════════
-   §JS-4  THEME / MODE / LANGUAGE
+   §JS-4  THEME / MODE / LANGUAGE  — mit localStorage-Persistenz
    ═══════════════════════════════════════════════════════════════════ */
-let LANG = 'de', MODE = 'auto';
+let LANG = localStorage.getItem('pf_lang') || 'de';
+let MODE = localStorage.getItem('pf_mode') || 'auto';
+let COLOR= localStorage.getItem('pf_color')|| 'teal';
+
+/* Gespeicherte Einstellungen sofort anwenden (verhindert Flackern) */
+(function applyStored(){
+  const r = document.documentElement;
+  r.setAttribute('data-color', COLOR);
+  r.setAttribute('data-mode',  MODE);
+  const mBtn = document.getElementById('modeBtn');
+  if(mBtn) mBtn.textContent = MODE === 'light' ? '☀' : '🌙';
+})();
 
 function setColor(c, btn) {
+  COLOR = c;
+  localStorage.setItem('pf_color', c);
   document.documentElement.setAttribute('data-color', c);
   document.querySelectorAll('.th-dot').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  else document.querySelector(`.th-dot[data-color="${c}"]`)?.classList.add('active');
 }
 
 function toggleMode() {
@@ -734,10 +778,12 @@ function toggleMode() {
   MODE = (MODE === 'auto' || MODE === 'dark') ? 'light' : 'dark';
   root.setAttribute('data-mode', MODE);
   btn.textContent = MODE === 'light' ? '☀' : '🌙';
+  localStorage.setItem('pf_mode', MODE);
 }
 
 function setLang(l) {
   LANG = l;
+  localStorage.setItem('pf_lang', l);
   const t = T[l];
   document.documentElement.setAttribute('lang', l);
   document.documentElement.setAttribute('dir', t.dir);
@@ -984,18 +1030,94 @@ function renderGrid() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════════
-   §JS-8  CUSTOM CURSOR
+   §JS-8  CUSTOM CURSOR — Leuchtpur + Ripple + flexible Reaktion
    ═══════════════════════════════════════════════════════════════════ */
 (function(){
-  const dot=document.getElementById('cdot'),ring=document.getElementById('cring');
-  if(!dot)return;
-  let mx=0,my=0,rx=0,ry=0;
-  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
-  (function t(){rx=lerp(rx,mx,.12);ry=lerp(ry,my,.12);ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(t);})();
-  document.querySelectorAll('a,button,.proj-card,.skill-pill,.th-dot,.lang-btn,.plat-btn').forEach(el=>{
-    el.addEventListener('mouseenter',()=>{ring.style.width='52px';ring.style.height='52px';ring.style.borderColor='rgba(var(--accent-rgb),.85)';});
-    el.addEventListener('mouseleave',()=>{ring.style.width='34px';ring.style.height='34px';ring.style.borderColor='rgba(var(--accent-rgb),.52)';});
+  const dot  = document.getElementById('cdot');
+  const ring = document.getElementById('cring');
+  if(!dot) return;
+
+  /* ── Trail-Punkte erzeugen ── */
+  const TRAIL_N = 9;
+  const trail   = [];
+  for(let i = 0; i < TRAIL_N; i++){
+    const t = document.createElement('div');
+    t.className = 'cursor-trail';
+    const frac = (i + 1) / TRAIL_N;          /* 0.11 … 1 */
+    t.style.cssText = `
+      width:${(5 - frac * 2.8).toFixed(1)}px;
+      height:${(5 - frac * 2.8).toFixed(1)}px;
+      opacity:${(0.55 - frac * 0.48).toFixed(2)};
+    `;
+    document.body.appendChild(t);
+    trail.push({ el: t, x: -100, y: -100 });
+  }
+
+  /* ── Zustand ── */
+  let mx = -200, my = -200;
+  let rx = -200, ry = -200;
+  /* Trail-Positionen als Ringpuffer */
+  const hist = Array.from({length: TRAIL_N * 3 + 4}, () => ({x:-200,y:-200}));
+  let hIdx = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    dot.style.left = mx + 'px';
+    dot.style.top  = my + 'px';
+    /* Aktuelle Position in Verlauf schreiben */
+    hist[hIdx % hist.length] = {x: mx, y: my};
+    hIdx++;
   });
+
+  /* ── Klick-Ripple ── */
+  document.addEventListener('click', e => {
+    const r = document.createElement('div');
+    r.className = 'cursor-ripple';
+    r.style.left   = e.clientX + 'px';
+    r.style.top    = e.clientY + 'px';
+    r.style.width  = '40px';
+    r.style.height = '40px';
+    document.body.appendChild(r);
+    setTimeout(() => r.remove(), 600);
+  });
+
+  /* ── Interaktive Elemente ── */
+  document.querySelectorAll('a,button,.proj-card,.skill-pill,.th-dot,.lang-btn,.plat-btn').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      dot.style.width  = '16px';
+      dot.style.height = '16px';
+      ring.style.width  = '58px';
+      ring.style.height = '58px';
+      ring.style.borderColor = `rgba(var(--accent-rgb),.95)`;
+    });
+    el.addEventListener('mouseleave', () => {
+      dot.style.width  = '10px';
+      dot.style.height = '10px';
+      ring.style.width  = '40px';
+      ring.style.height = '40px';
+      ring.style.borderColor = `rgba(var(--accent-rgb),.72)`;
+    });
+  });
+
+  /* ── Render-Loop ── */
+  (function loop(){
+    /* Ring folgt mit sanftem Lerp */
+    rx = lerp(rx, mx, 0.15);
+    ry = lerp(ry, my, 0.15);
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+
+    /* Trail-Punkte aus Verlauf-Puffer */
+    for(let i = 0; i < TRAIL_N; i++){
+      const age = (i + 1) * 3;            /* je weiter hinten, desto älter */
+      const idx = ((hIdx - age) % hist.length + hist.length) % hist.length;
+      const pos = hist[idx];
+      trail[i].el.style.left = pos.x + 'px';
+      trail[i].el.style.top  = pos.y + 'px';
+    }
+
+    requestAnimationFrame(loop);
+  })();
 })();
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1036,8 +1158,46 @@ document.getElementById('modeBtn').textContent =
    ADMIN PANEL JS  —  wird im Export NICHT mitgeliefert
 
 
-setLang('de');
+/* Gespeicherte Sprache + Farbe wiederherstellen */
+setLang(LANG);
+setColor(COLOR);
 obAll();
-</script>
+</script><div class="cursor-trail" style="width: 4.7px; height: 4.7px; opacity: 0.5; left: 1286px; top: 644px;"></div><div class="cursor-trail" style="width: 4.4px; height: 4.4px; opacity: 0.44; left: 1283px; top: 644px;"></div><div class="cursor-trail" style="width: 4.1px; height: 4.1px; opacity: 0.39; left: 1282px; top: 644px;"></div><div class="cursor-trail" style="width: 3.8px; height: 3.8px; opacity: 0.34; left: 1280px; top: 644px;"></div><div class="cursor-trail" style="width: 3.4px; height: 3.4px; opacity: 0.28; left: 1278px; top: 644px;"></div><div class="cursor-trail" style="width: 3.1px; height: 3.1px; opacity: 0.23; left: 1275px; top: 644px;"></div><div class="cursor-trail" style="width: 2.8px; height: 2.8px; opacity: 0.18; left: 1271px; top: 644px;"></div><div class="cursor-trail" style="width: 2.5px; height: 2.5px; opacity: 0.12; left: 1259px; top: 644px;"></div><div class="cursor-trail" style="width: 2.2px; height: 2.2px; opacity: 0.07; left: 1241px; top: 645px;"></div>
 
-</body></html>
+<script>
+(function() {
+  var ws = new WebSocket('ws://' + window.location.host + 
+             '/jb-server-page?reloadMode=RELOAD_ON_SAVE&'+
+             'referrer=' + encodeURIComponent(window.location.pathname));
+  ws.onmessage = function (msg) {
+      if (msg.data === 'reload') {
+          window.location.reload();
+      }
+      if (msg.data.startsWith('update-css ')) {
+          var messageId = msg.data.substring(11);
+          var links = document.getElementsByTagName('link');
+          for (var i = 0; i < links.length; i++) {
+              var link = links[i];
+              if (link.rel !== 'stylesheet') continue;
+              var clonedLink = link.cloneNode(true);
+              var newHref = link.href.replace(/(&|\?)jbUpdateLinksId=\d+/, "$1jbUpdateLinksId=" + messageId);
+              if (newHref !== link.href) {
+                clonedLink.href = newHref;
+              }
+              else {
+                var indexOfQuest = newHref.indexOf('?');
+                if (indexOfQuest >= 0) {
+                  // to support ?foo#hash 
+                  clonedLink.href = newHref.substring(0, indexOfQuest + 1) + 'jbUpdateLinksId=' + messageId + '&' + 
+                                    newHref.substring(indexOfQuest + 1);
+                }
+                else {
+                  clonedLink.href += '?' + 'jbUpdateLinksId=' + messageId;
+                }
+              }
+              link.replaceWith(clonedLink);
+          }
+      }
+  };
+})();
+</script></body></html>
